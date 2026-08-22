@@ -1,0 +1,98 @@
+# =============================================
+# Python
+# =============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+wheels/
+pip-wheel-metadata/
+.installed.cfg
+*.egg-link
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# =============================================
+# Environment & Secrets
+# =============================================
+.env
+*.env.local
+*.env.production
+*.env.staging
+# Keep .env.example
+!.env.example
+
+# =============================================
+# Database files
+# =============================================
+*.db
+*.sqlite
+*.sqlite3
+
+# =============================================
+# Node.js / Frontend
+# =============================================
+frontend/node_modules/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# Frontend build output (exclude from git — built by Docker)
+frontend/dist/
+
+# =============================================
+# Docker
+# =============================================
+# Keep docker-compose.yml
+
+# =============================================
+# IDE & Editor
+# =============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# =============================================
+# Testing & Coverage
+# =============================================
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+test_*.db
+pytest-cache/
+
+# =============================================
+# Agents & Internal tooling
+# =============================================
+.agents/
+
+# =============================================
+# Logs
+# =============================================
+*.log
+logs/

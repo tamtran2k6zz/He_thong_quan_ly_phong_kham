@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # =========================================================================
+  # 1. MySQL 8.0 Database Service (Connectable from MySQL Workbench on port 3307)
+  # =========================================================================
+  mysql:
+    image: mysql:8.0
+    container_name: clinic_mysql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: clinic_db
+      MYSQL_USER: clinic_user
+      MYSQL_PASSWORD: clinic_password123
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - clinic_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # =========================================================================
+  # 2. FastAPI Backend Service (REST API + Administrative AI Engine)
+  # =========================================================================
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: clinic_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PROJECT_NAME=Hệ thống Quản lý Phòng khám Đa khoa thông minh tích hợp AI Hành chính
+      - VERSION=1.0.0
+      - API_V1_STR=/api/v1
+      - SECRET_KEY=c0fc7b6b19a1e0b57e79c23594892c9ff5048d087b7a1f59e9a4f494191d9047
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=1440
+      - DATABASE_URL=mysql+pymysql://clinic_user:clinic_password123@mysql:3306/clinic_db
+      - AI_PROVIDER=mock
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_MODEL=llama3
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    networks:
+      - clinic_net
+    depends_on:
+      mysql:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # =========================================================================
+  # 3. React Single Page Application Frontend (Nginx Production Server)
+  # =========================================================================
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: clinic_frontend
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+      - "5173:3000"
+    networks:
+      - clinic_net
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  clinic_net:
+    driver: bridge
