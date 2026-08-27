@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # =========================================================================
   # 1. MySQL 8.0 Database Service (Connectable from MySQL Workbench on port 3307)
@@ -46,11 +44,13 @@ services:
       - ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=1440
       - DATABASE_URL=mysql+pymysql://clinic_user:clinic_password123@mysql:3306/clinic_db
-      - AI_PROVIDER=mock
+      - AI_PROVIDER=${AI_PROVIDER:-gemini}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-3.6-flash}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
       - OLLAMA_MODEL=llama3
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     networks:
       - clinic_net
     depends_on:

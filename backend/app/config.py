@@ -16,18 +16,22 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./clinic.db"
     
     # AI Engine Settings
-    AI_PROVIDER: str = "mock"  # "mock", "ollama", "gemini", "openai"
+    AI_PROVIDER: str = "gemini"  # "gemini", "openai", "ollama", "mock"
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "llama3"
     GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-3.6-flash"
     OPENAI_API_KEY: Optional[str] = None
+    OPENAI_MODEL: str = "gpt-4o-mini"
     
     # CORS Settings
     CORS_ORIGINS: List[str] = [
         "http://localhost:5173",
         "http://localhost:3000",
+        "http://localhost:3001",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
         "*"
     ]
 

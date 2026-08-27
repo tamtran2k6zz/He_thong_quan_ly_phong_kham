@@ -13,9 +13,9 @@ from backend.app.config import settings
 def get_ai_provider(provider_type: Optional[str] = None) -> AIProvider:
     """
     Factory function returning the configured AI Provider instance.
-    Defaults to settings.AI_PROVIDER.
+    Prioritizes real Cloud LLM (Gemini / OpenAI) whenever keys are provided.
     """
-    p_type = (provider_type or settings.AI_PROVIDER).lower()
+    p_type = (provider_type or settings.AI_PROVIDER or "").lower()
 
     if p_type in ["mock", "mock_deterministic", "offline"]:
         return MockDeterministicAIProvider()
@@ -25,9 +25,17 @@ def get_ai_provider(provider_type: Optional[str] = None) -> AIProvider:
         return CloudAIProvider(provider_type="gemini")
     elif p_type in ["openai", "gpt"]:
         return CloudAIProvider(provider_type="openai")
-    else:
-        # Default fallback is always Mock provider for zero-config reliability
-        return MockDeterministicAIProvider()
+    
+    # Auto-detection: If Gemini Key exists, use Gemini
+    if settings.GEMINI_API_KEY and len(settings.GEMINI_API_KEY) > 10:
+        return CloudAIProvider(provider_type="gemini")
+    
+    # If OpenAI Key exists, use OpenAI
+    if settings.OPENAI_API_KEY and len(settings.OPENAI_API_KEY) > 10:
+        return CloudAIProvider(provider_type="openai")
+
+    # Default fallback
+    return MockDeterministicAIProvider()
 
 
 __all__ = [
