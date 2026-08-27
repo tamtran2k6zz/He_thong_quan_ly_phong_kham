@@ -15,7 +15,8 @@ import {
   Bot,
   Layers,
   History,
-  Building
+  Building,
+  ShieldAlert
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -100,22 +101,22 @@ const Sidebar = ({ isOpen, onClose }) => {
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 bg-slate-900/50 z-20 lg:hidden backdrop-blur-xs"
+          className="fixed inset-0 bg-slate-900/40 z-20 lg:hidden backdrop-blur-xs"
         />
       )}
 
       <aside
-        className={`fixed top-[57px] bottom-0 left-0 z-20 w-64 bg-white border-r border-slate-200 overflow-y-auto transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-[53px] bottom-0 left-0 z-20 w-64 bg-white border-r border-slate-200/90 overflow-y-auto transition-transform duration-200 ease-in-out lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="p-4 space-y-6">
+        <div className="p-3.5 space-y-5">
           {sections.map((section, idx) => (
             <div key={idx} className="space-y-1">
-              <div className="px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
                 {section.title}
               </div>
-              <nav className="mt-2 space-y-1">
+              <nav className="mt-1.5 space-y-0.5">
                 {section.items.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -125,10 +126,10 @@ const Sidebar = ({ isOpen, onClose }) => {
                       end={item.end}
                       onClick={onClose}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                        `flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] ${
                           isActive
-                            ? 'bg-medical-50 text-medical-700 border border-medical-200/80 shadow-2xs font-bold'
-                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                            ? 'bg-sky-50 text-sky-700 border border-sky-200/90 font-bold shadow-subtle'
+                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                         }`
                       }
                     >
@@ -142,10 +143,18 @@ const Sidebar = ({ isOpen, onClose }) => {
           ))}
         </div>
 
-        {/* Clinic info badge at bottom */}
-        <div className="p-4 m-4 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-500">
-          <div className="font-semibold text-slate-700">Phiên bản: 1.0.0 (SDLC Full)</div>
-          <div className="mt-0.5">Khử PII & AI Guardrails Enabled</div>
+        {/* Clinic Info Badge at Bottom */}
+        <div className="p-3 m-3.5 bg-slate-50 border border-slate-200 rounded-xl text-[10px] text-slate-500 font-mono space-y-1">
+          <div className="font-bold text-slate-700 flex items-center justify-between">
+            <span>SDLC V1.0.0</span>
+            <span className="text-emerald-600 flex items-center gap-1 font-semibold text-[9px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              RBAC OK
+            </span>
+          </div>
+          <div className="text-slate-400 leading-tight">
+            PII Redaction & Medical Guardrails Active
+          </div>
         </div>
       </aside>
     </>

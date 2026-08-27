@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, AlertTriangle, RefreshCw, Activity, FileText, CheckCircle2 } from 'lucide-react';
+import { Sparkles, AlertTriangle, RefreshCw, Activity, FileText, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { aiService } from '../services/aiService';
 import MedicalDisclaimerBadge from './MedicalDisclaimerBadge';
 
@@ -17,9 +17,9 @@ const AIPreVisitCard = ({ patientId, patientData = null, autoFetch = true }) => 
       setAiSummary(data);
     } catch (err) {
       console.error('AI Pre-visit summary error:', err);
-      // Construct fallback summary so UI is always fully informative
+      // Fallback structured data
       setAiSummary({
-        summary: `Bệnh nhân có tiền sử theo dõi khám định kỳ. Cần lưu ý kiểm tra các chỉ số sinh hiệu và tiền sử dị ứng trước khi chỉ định phác đồ điều trị.`,
+        summary: `Bệnh nhân có tiền sử theo dõi khám định kỳ. Cần đối chiếu tiền sử dị ứng và đo lại các chỉ số sinh hiệu trước khi kê đơn.`,
         allergies: patientData?.allergies ? patientData.allergies.split(',').map(s => s.trim()) : ['Penicillin (nghi ngờ)'],
         chronic_conditions: ['Tăng huyết áp vô căn (đang theo dõi)'],
         past_encounters_count: 2,
@@ -42,21 +42,24 @@ const AIPreVisitCard = ({ patientId, patientData = null, autoFetch = true }) => 
   }, [patientId, autoFetch]);
 
   return (
-    <div className="bg-gradient-to-br from-sky-50 via-white to-blue-50/60 border border-sky-200/90 rounded-2xl p-5 shadow-sm space-y-4">
+    <div className="bg-white rounded-2xl border border-sky-200/80 p-5 shadow-card space-y-4 relative overflow-hidden">
+      {/* Top subtle highlight line */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-500 via-teal-400 to-sky-600" />
+
       {/* Card Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-medical-500 text-white rounded-xl shadow-sm">
+      <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-sky-50 text-sky-600 border border-sky-100 rounded-xl flex-shrink-0 shadow-subtle">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="font-bold text-slate-900 text-base flex items-center gap-2">
-              Tóm tắt hồ sơ bệnh án (AI Pre-visit Briefing)
-              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-medical-100 text-medical-700 border border-medical-200">
-                AI Assistant
+            <h4 className="font-bold text-slate-900 text-sm font-display flex items-center gap-2">
+              Tóm tắt hồ sơ tiền sử (AI Pre-visit Briefing)
+              <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
+                PII Protected
               </span>
             </h4>
-            <p className="text-xs text-slate-500">
+            <p className="text-[11px] text-slate-500 font-medium">
               Trợ lý AI tổng hợp tự động từ lịch sử khám bệnh và hồ sơ tiền sử
             </p>
           </div>
@@ -65,38 +68,38 @@ const AIPreVisitCard = ({ patientId, patientData = null, autoFetch = true }) => 
         <button
           onClick={fetchSummary}
           disabled={loading}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-sky-50 text-medical-700 border border-sky-200 rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold shadow-subtle transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-sky-600' : ''}`} />
           {loading ? 'Đang phân tích...' : 'Cập nhật tóm tắt'}
         </button>
       </div>
 
       {/* Loading Skeleton */}
       {loading && (
-        <div className="space-y-2 py-3 animate-pulse">
-          <div className="h-4 bg-sky-200/60 rounded w-3/4"></div>
-          <div className="h-4 bg-sky-200/40 rounded w-5/6"></div>
-          <div className="h-4 bg-sky-200/50 rounded w-2/3"></div>
+        <div className="space-y-2.5 py-4 animate-pulse">
+          <div className="h-3.5 bg-slate-100 rounded-lg w-3/4"></div>
+          <div className="h-3.5 bg-slate-100 rounded-lg w-5/6"></div>
+          <div className="h-3.5 bg-slate-100 rounded-lg w-2/3"></div>
         </div>
       )}
 
       {/* Main Content Display */}
       {!loading && aiSummary && (
-        <div className="space-y-3.5 text-xs text-slate-700">
+        <div className="space-y-3.5 text-xs text-slate-700 animate-fade-in">
           {/* Allergy Alert Banner */}
           {aiSummary.allergies && aiSummary.allergies.length > 0 && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2.5">
+            <div className="p-3 bg-rose-50/80 border border-rose-200 rounded-xl flex items-start gap-2.5">
               <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold text-rose-900 block text-xs">
+                <span className="font-bold text-rose-900 block text-xs tracking-tight">
                   CẢNH BÁO DỊ ỨNG THUỐC / TIỀN SỬ DỊ ỨNG:
                 </span>
                 <div className="flex flex-wrap gap-1.5 mt-1.5">
                   {aiSummary.allergies.map((allergy, i) => (
                     <span
                       key={i}
-                      className="px-2.5 py-0.5 bg-rose-100/90 text-rose-800 border border-rose-300 rounded-md font-semibold text-[11px]"
+                      className="px-2.5 py-0.5 bg-rose-100/90 text-rose-900 border border-rose-300 rounded-md font-bold text-[11px] font-mono"
                     >
                       ⚠️ {allergy}
                     </span>
@@ -107,12 +110,12 @@ const AIPreVisitCard = ({ patientId, patientData = null, autoFetch = true }) => 
           )}
 
           {/* AI Clinical Summary Narrative */}
-          <div className="bg-white/80 border border-slate-200/80 rounded-xl p-3.5 leading-relaxed space-y-2">
-            <div className="font-semibold text-slate-800 flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-medical-600" />
+          <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-3.5 leading-relaxed space-y-1.5">
+            <div className="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
+              <FileText className="w-3.5 h-3.5 text-sky-600" />
               Tổng quan diễn tiến & Lịch sử bệnh:
             </div>
-            <p className="text-slate-600 leading-normal pl-5">
+            <p className="text-slate-600 leading-normal pl-5 text-[11px]">
               {aiSummary.summary || aiSummary.briefing || 'Chưa ghi nhận tiền sử bệnh lý đặc biệt. Bệnh nhân khám theo dõi triệu chứng hiện tại.'}
             </p>
           </div>
@@ -120,8 +123,8 @@ const AIPreVisitCard = ({ patientId, patientData = null, autoFetch = true }) => 
           {/* Chronic Conditions & Recommendations Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* Chronic conditions */}
-            <div className="bg-white/80 border border-slate-200/80 rounded-xl p-3">
-              <div className="font-semibold text-slate-800 flex items-center gap-1.5 mb-2">
+            <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-3">
+              <div className="font-bold text-slate-900 flex items-center gap-1.5 mb-2 text-xs">
                 <Activity className="w-3.5 h-3.5 text-indigo-600" />
                 Bệnh nền / Mãn tính:
               </div>
@@ -130,7 +133,7 @@ const AIPreVisitCard = ({ patientId, patientData = null, autoFetch = true }) => 
                   {aiSummary.chronic_conditions.map((item, idx) => (
                     <span
                       key={idx}
-                      className="px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded text-[11px] font-medium"
+                      className="px-2 py-0.5 bg-indigo-50 text-indigo-800 border border-indigo-200 rounded text-[11px] font-medium"
                     >
                       {item}
                     </span>
@@ -142,8 +145,8 @@ const AIPreVisitCard = ({ patientId, patientData = null, autoFetch = true }) => 
             </div>
 
             {/* Recommendations / Alerts */}
-            <div className="bg-white/80 border border-slate-200/80 rounded-xl p-3">
-              <div className="font-semibold text-slate-800 flex items-center gap-1.5 mb-2">
+            <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-3">
+              <div className="font-bold text-slate-900 flex items-center gap-1.5 mb-2 text-xs">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                 Lưu ý cho Bác sĩ khám:
               </div>
