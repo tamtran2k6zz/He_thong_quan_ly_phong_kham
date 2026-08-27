@@ -3,6 +3,18 @@ import { Sparkles, AlertTriangle, RefreshCw, Activity, FileText, CheckCircle2, S
 import { aiService } from '../services/aiService';
 import MedicalDisclaimerBadge from './MedicalDisclaimerBadge';
 
+const parseArrayField = (fieldData) => {
+  if (!fieldData) return [];
+  if (Array.isArray(fieldData)) return fieldData.filter(Boolean);
+  if (typeof fieldData === 'string') {
+    return fieldData
+      .split(/[,;\n]+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0 && !s.toLowerCase().includes('không ghi nhận') && !s.toLowerCase().includes('không'));
+  }
+  return [];
+};
+
 const AIPreVisitCard = ({ patientId, patientData = null, autoFetch = true }) => {
   const [loading, setLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState(null);
@@ -20,7 +32,7 @@ const AIPreVisitCard = ({ patientId, patientData = null, autoFetch = true }) => 
       // Fallback structured data
       setAiSummary({
         summary: `Bệnh nhân có tiền sử theo dõi khám định kỳ. Cần đối chiếu tiền sử dị ứng và đo lại các chỉ số sinh hiệu trước khi kê đơn.`,
-        allergies: patientData?.allergies ? patientData.allergies.split(',').map(s => s.trim()) : ['Penicillin (nghi ngờ)'],
+        allergies: patientData?.allergies ? parseArrayField(patientData.allergies) : ['Penicillin (nghi ngờ)'],
         chronic_conditions: ['Tăng huyết áp vô căn (đang theo dõi)'],
         past_encounters_count: 2,
         recommendations: [
@@ -40,6 +52,10 @@ const AIPreVisitCard = ({ patientId, patientData = null, autoFetch = true }) => 
       fetchSummary();
     }
   }, [patientId, autoFetch]);
+
+  const allergiesList = parseArrayField(aiSummary?.allergies);
+  const chronicList = parseArrayField(aiSummary?.chronic_conditions);
+  const recommendationsList = parseArrayField(aiSummary?.recommendations || aiSummary?.clinical_alerts);
 
   return (
     <div className="bg-white rounded-2xl border border-sky-200/80 p-5 shadow-card space-y-4 relative overflow-hidden">
@@ -88,7 +104,7 @@ const AIPreVisitCard = ({ patientId, patientData = null, autoFetch = true }) => 
       {!loading && aiSummary && (
         <div className="space-y-3.5 text-xs text-slate-700 animate-fade-in">
           {/* Allergy Alert Banner */}
-          {aiSummary.allergies && aiSummary.allergies.length > 0 && (
+          {allergiesList.length > 0 && (
             <div className="p-3 bg-rose-50/80 border border-rose-200 rounded-xl flex items-start gap-2.5">
               <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
               <div>
@@ -96,7 +112,7 @@ const AIPreVisitCard = ({ patientId, patientData = null, autoFetch = true }) => 
                   CẢNH BÁO DỊ ỨNG THUỐC / TIỀN SỬ DỊ ỨNG:
                 </span>
                 <div className="flex flex-wrap gap-1.5 mt-1.5">
-                  {aiSummary.allergies.map((allergy, i) => (
+                  {allergiesList.map((allergy, i) => (
                     <span
                       key={i}
                       className="px-2.5 py-0.5 bg-rose-100/90 text-rose-900 border border-rose-300 rounded-md font-bold text-[11px] font-mono"
@@ -115,8 +131,8 @@ const AIPreVisitCard = ({ patientId, patientData = null, autoFetch = true }) => 
               <FileText className="w-3.5 h-3.5 text-sky-600" />
               Tổng quan diễn tiến & Lịch sử bệnh:
             </div>
-            <p className="text-slate-600 leading-normal pl-5 text-[11px]">
-              {aiSummary.summary || aiSummary.briefing || 'Chưa ghi nhận tiền sử bệnh lý đặc biệt. Bệnh nhân khám theo dõi triệu chứng hiện tại.'}
+            <p className="text-slate-600 leading-normal pl-5 text-[11px] whitespace-pre-line">
+              {aiSummary.summary || aiSummary.content || aiSummary.briefing || 'Chưa ghi nhận tiền sử bệnh lý đặc biệt. Bệnh nhân khám theo dõi triệu chứng hiện tại.'}
             </p>
           </div>
 
@@ -128,9 +144,9 @@ const AIPreVisitCard = ({ patientId, patientData = null, autoFetch = true }) => 
                 <Activity className="w-3.5 h-3.5 text-indigo-600" />
                 Bệnh nền / Mãn tính:
               </div>
-              {aiSummary.chronic_conditions && aiSummary.chronic_conditions.length > 0 ? (
+              {chronicList.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
-                  {aiSummary.chronic_conditions.map((item, idx) => (
+                  {chronicList.map((item, idx) => (
                     <span
                       key={idx}
                       className="px-2 py-0.5 bg-indigo-50 text-indigo-800 border border-indigo-200 rounded text-[11px] font-medium"
@@ -151,10 +167,13 @@ const AIPreVisitCard = ({ patientId, patientData = null, autoFetch = true }) => 
                 Lưu ý cho Bác sĩ khám:
               </div>
               <ul className="list-disc list-inside space-y-1 text-slate-600 text-[11px]">
-                {(aiSummary.recommendations || [
-                  'Khai thác thêm triệu chứng khởi phát và thời gian kéo dài.',
-                  'Đo sinh hiệu kỹ trước khi chỉ định dùng thuốc.'
-                ]).map((rec, idx) => (
+                {(recommendationsList.length > 0
+                  ? recommendationsList
+                  : [
+                      'Khai thác thêm triệu chứng khởi phát và thời gian kéo dài.',
+                      'Đo sinh hiệu kỹ trước khi chỉ định dùng thuốc.'
+                    ]
+                ).map((rec, idx) => (
                   <li key={idx}>{rec}</li>
                 ))}
               </ul>
