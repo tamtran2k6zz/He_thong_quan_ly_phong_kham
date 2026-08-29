@@ -13,18 +13,24 @@ from backend.app.ai_engine.providers.mock_provider import MockDeterministicAIPro
 from backend.app.config import settings
 
 
+_UNSET = object()
+
+
 class CloudAIProvider(AIProvider):
     """Cloud LLM Adapter supporting Google Gemini and OpenAI APIs."""
 
     def __init__(
         self,
         provider_type: str = "gemini",
-        api_key: Optional[str] = None,
+        api_key: Any = _UNSET,
         model_name: Optional[str] = None,
         timeout: int = 20
     ):
         self.provider_type = provider_type.lower()
-        self.api_key = api_key or (settings.GEMINI_API_KEY if self.provider_type == "gemini" else settings.OPENAI_API_KEY)
+        if api_key is _UNSET:
+            self.api_key = settings.GEMINI_API_KEY if self.provider_type == "gemini" else settings.OPENAI_API_KEY
+        else:
+            self.api_key = api_key
         
         if self.provider_type == "gemini":
             self.model_name = model_name or settings.GEMINI_MODEL or "gemini-3.6-flash"
