@@ -38,7 +38,7 @@ Hệ thống giải quyết toàn diện bài toán quản lý phân tán tại 
 
 | Thành Phần | Bản Chất | Vai Trò Trong Dự Án Phòng Khám |
 | :--- | :--- | :--- |
-| **AI Agent (Codex)** | Trí tuệ điều phối trung tâm | Thực thi các tác vụ phát triển phần mềm, phân tích nghiệp vụ, sinh mã nguồn, thực thi kiểm thử và tạo tài liệu theo chỉ dẫn. |
+| **AI Agent ** | Trí tuệ điều phối trung tâm | Thực thi các tác vụ phát triển phần mềm, phân tích nghiệp vụ, sinh mã nguồn, thực thi kiểm thử và tạo tài liệu theo chỉ dẫn. |
 | **Skill (`.agents/skills`)** | Tri thức thủ tục & tiêu chuẩn | Quy định quy trình, đầu vào/đầu ra, ràng buộc nghiệp vụ y tế, ranh giới an toàn AI và tiêu chí chấp nhận cho từng giai đoạn SDLC. |
 | **Tool** | Cơ chế tương tác môi trường | Terminal, Pytest runner, Docker Compose, Git CLI, File I/O, Linter, HTTP client. |
 | **MCP (Model Context Protocol)** | Giao thức kết nối dịch vụ ngoài | Kết nối cơ sở dữ liệu MySQL 8.0, Google Gemini API, OpenAI API, Ollama Engine và GitHub Repository. |
