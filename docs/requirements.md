@@ -203,85 +203,113 @@ Hệ thống định nghĩa danh mục các Yêu cầu Chức năng chuẩn hóa
 ### 4.1. Sơ đồ Use Case Tổng thể với Quan hệ Phụ thuộc `<<include>>` và `<<extend>>`
 
 ```mermaid
-graph TD
-    subgraph ACTORS [TÁC NHÂN HỆ THỐNG]
-        A_ADMIN["👤 Admin"]
+graph LR
+    %% ==========================================
+    %% 1. TÁC NHÂN NGƯỜI DÙNG (BÊN TRÁI)
+    %% ==========================================
+    subgraph ACTORS ["👥 TÁC NHÂN (ACTORS)"]
         A_RECEP["👩‍💼 Lễ tân"]
         A_DOC["👨‍⚕️ Bác sĩ"]
         A_ACC["💰 Kế toán"]
-        A_PAT["🧑 Bệnh nhân"]
-        A_AI["🤖 Google Gemini"]
+        A_ADMIN["👤 Admin"]
     end
 
-    subgraph SYSTEM_BOUNDARY ["🏥 HỆ THỐNG PHÒNG KHÁM CMS-AI"]
-        UC_LOGIN(["UC-00: Đăng nhập JWT"]):::coreUC
-        UC_PAT(["UC-01: Đăng ký / Tra cứu Hồ sơ"]):::recepUC
-        UC_APPT(["UC-02: Đặt lịch hẹn"]):::recepUC
-        UC_CONFLICT(["UC-03: Kiểm tra Xung đột"]):::coreUC
-        UC_CHECKIN(["UC-04: Tiếp đón & Cấp số"]):::recepUC
-        UC_FAQ(["UC-05: AI FAQ Chatbot"]):::aiUC
+    %% ==========================================
+    %% 2. RANH GIỚI HỆ THỐNG PHÒNG KHÁM CMS-AI
+    %% ==========================================
+    subgraph CMS_SYSTEM ["🏥 HỆ THỐNG PHÒNG KHÁM (CMS-AI)"]
         
-        UC_EXAM(["UC-08: Khám bệnh & ICD-10"]):::docUC
-        UC_PRE_VISIT(["UC-07: Tóm tắt AI Pre-visit"]):::aiUC
-        UC_ORDER_TEST(["UC-09: Chỉ định Xét nghiệm"]):::docUC
-        UC_PRESCRIBE(["UC-10: Kê đơn thuốc"]):::docUC
-        UC_ALLERGY(["UC-11: Cảnh báo Dị ứng"]):::coreUC
-        UC_DISCHARGE(["UC-12: AI Hướng dẫn sau khám"]):::aiUC
-        
-        UC_BILL(["UC-13: Tổng hợp Hóa đơn"]):::accUC
-        UC_BHYT(["UC-14: Khấu trừ BHYT"]):::coreUC
-        UC_VIETQR(["UC-15: Thanh toán VietQR"]):::accUC
-        UC_PRINT(["UC-16: In Biên lai A4-A5"]):::accUC
-        
-        UC_PII(["UC-22: Khử định danh PII"]):::aiUC
-        UC_GUARD(["UC-23: Medical Guardrails"]):::aiUC
+        %% PHÂN HỆ TIẾP ĐÓN
+        subgraph MOD_RECEP ["📋 TIẾP ĐÓN & LỊCH HẸN"]
+            UC_APPT(["Đặt lịch khám"]):::recep
+            UC_CHECKIN(["Tiếp đón & Cấp số"]):::recep
+            UC_PAT(["Tra cứu / Đăng ký BN"]):::recep
+            UC_CONFLICT(["Kiểm tra trùng lịch"]):::core
+            
+            UC_APPT -.->|"<<include>>"| UC_CONFLICT
+            UC_CHECKIN -.->|"<<include>>"| UC_PAT
+        end
+
+        %% PHÂN HỆ KHÁM BỆNH
+        subgraph MOD_DOC ["🩺 BÀN KHÁM LÂM SÀNG"]
+            UC_EXAM(["Khám & Chẩn đoán ICD-10"]):::doc
+            UC_RX(["Kê đơn thuốc"]):::doc
+            UC_ALLERGY(["Cảnh báo Dị ứng"]):::core
+            UC_LAB(["Chỉ định Xét nghiệm"]):::doc
+            
+            UC_EXAM -.->|"<<include>>"| UC_RX
+            UC_LAB -.->|"<<extend>>"| UC_EXAM
+            UC_ALLERGY -.->|"<<extend>>"| UC_RX
+        end
+
+        %% PHÂN HỆ VIỆN PHÍ
+        subgraph MOD_ACC ["💳 THU NGÂN & VIỆN PHÍ"]
+            UC_BILL(["Tổng hợp Hóa đơn"]):::acc
+            UC_BHYT(["Khấu trừ BHYT"]):::core
+            UC_QR(["Tạo mã VietQR"]):::acc
+            UC_PRINT(["In biên lai A4-A5"]):::acc
+            
+            UC_BILL -.->|"<<include>>"| UC_BHYT
+            UC_QR -.->|"<<extend>>"| UC_BILL
+            UC_PRINT -.->|"<<extend>>"| UC_BILL
+        end
+
+        %% PHÂN HỆ TRỢ LÝ AI
+        subgraph MOD_AI ["🤖 TRỢ LÝ AI HÀNH CHÍNH"]
+            UC_PRE(["AI Pre-visit Briefing"]):::ai
+            UC_DISCHARGE(["AI Hướng dẫn sau khám"]):::ai
+            UC_FAQ(["AI FAQ Chatbot"]):::ai
+            UC_PII(["Khử PII & Guardrails"]):::aiCore
+            
+            UC_PRE -.->|"<<include>>"| UC_PII
+            UC_DISCHARGE -.->|"<<include>>"| UC_PII
+            UC_FAQ -.->|"<<include>>"| UC_PII
+        end
+
+        %% PHÂN HỆ QUẢN TRỊ
+        subgraph MOD_ADMIN ["⚙️ QUẢN TRỊ HỆ THỐNG"]
+            UC_AUTH(["Đăng nhập & Phân quyền JWT"]):::core
+            UC_USER(["Quản lý Người dùng & Ca"]):::admin
+            UC_AUDIT(["Giám sát Audit & AI Logs"]):::admin
+        end
     end
 
-    A_ADMIN --> UC_LOGIN
-    A_RECEP --> UC_LOGIN
-    A_RECEP --> UC_PAT
+    %% TÁC NHÂN BÊN NGOÀI (BÊN PHẢI)
+    subgraph EXT_SERVICES ["🌐 DỊCH VỤ NGOÀI"]
+        A_AI["🤖 Google Gemini Live"]
+    end
+
+    %% ==========================================
+    %% KẾT NỐI TÁC NHÂN ĐẾN PHÂN HỆ TƯƠNG ỨNG
+    %% ==========================================
     A_RECEP --> UC_APPT
     A_RECEP --> UC_CHECKIN
     A_RECEP --> UC_FAQ
-    
-    A_DOC --> UC_LOGIN
+
     A_DOC --> UC_EXAM
-    A_DOC --> UC_PRESCRIBE
-    
-    A_ACC --> UC_LOGIN
+    A_DOC --> UC_PRE
+    A_DOC --> UC_DISCHARGE
+
     A_ACC --> UC_BILL
-    A_ACC --> UC_VIETQR
-    
-    A_PAT -.-> UC_APPT
-    A_PAT -.-> UC_FAQ
 
-    %% <<include>>
-    UC_APPT -.->|"<<include>>"| UC_CONFLICT
-    UC_APPT -.->|"<<include>>"| UC_LOGIN
-    UC_CHECKIN -.->|"<<include>>"| UC_PAT
-    UC_EXAM -.->|"<<include>>"| UC_LOGIN
-    UC_PRESCRIBE -.->|"<<include>>"| UC_EXAM
-    UC_BILL -.->|"<<include>>"| UC_BHYT
-    UC_BILL -.->|"<<include>>"| UC_LOGIN
-    UC_FAQ -.->|"<<include>>"| UC_PII
-    UC_PRE_VISIT -.->|"<<include>>"| UC_PII
-    UC_DISCHARGE -.->|"<<include>>"| UC_PII
-    UC_PII -.->|"<<include>>"| UC_GUARD
-    UC_GUARD -.-> A_AI
+    A_ADMIN --> UC_AUTH
+    A_ADMIN --> UC_USER
+    A_ADMIN --> UC_AUDIT
 
-    %% <<extend>>
-    UC_ALLERGY -.->|"<<extend>>"| UC_PRESCRIBE
-    UC_PRE_VISIT -.->|"<<extend>>"| UC_EXAM
-    UC_DISCHARGE -.->|"<<extend>>"| UC_EXAM
-    UC_ORDER_TEST -.->|"<<extend>>"| UC_EXAM
-    UC_VIETQR -.->|"<<extend>>"| UC_BILL
-    UC_PRINT -.->|"<<extend>>"| UC_BILL
+    %% Kết nối AI ra bên ngoài
+    UC_PII -->|HTTPS / API Key| A_AI
 
-    classDef coreUC fill:#f1f5f9,stroke:#64748b,stroke-width:1px,color:#0f172a;
-    classDef recepUC fill:#ecfdf5,stroke:#10b981,stroke-width:1.5px,color:#065f46;
-    classDef docUC fill:#eff6ff,stroke:#3b82f6,stroke-width:1.5px,color:#1e40af;
-    classDef accUC fill:#fffbeb,stroke:#f59e0b,stroke-width:1.5px,color:#92400e;
-    classDef aiUC fill:#fdf2f8,stroke:#ec4899,stroke-width:1.5px,color:#831843;
+    %% Luồng chuyển tiếp ca khám hoàn tất sang viện phí
+    UC_EXAM -.->|Hoàn tất ca khám| UC_BILL
+
+    %% Định dạng trực quan
+    classDef recep fill:#ecfdf5,stroke:#10b981,stroke-width:1.5px,color:#065f46;
+    classDef doc fill:#eff6ff,stroke:#3b82f6,stroke-width:1.5px,color:#1e40af;
+    classDef acc fill:#fffbeb,stroke:#f59e0b,stroke-width:1.5px,color:#92400e;
+    classDef admin fill:#faf5ff,stroke:#a855f7,stroke-width:1.5px,color:#6b21a8;
+    classDef ai fill:#fdf2f8,stroke:#ec4899,stroke-width:1.5px,color:#831843;
+    classDef aiCore fill:#fce7f3,stroke:#db2777,stroke-width:1.5px,color:#9d174d;
+    classDef core fill:#f1f5f9,stroke:#64748b,stroke-width:1.5px,color:#0f172a;
 ```
 
 ---
