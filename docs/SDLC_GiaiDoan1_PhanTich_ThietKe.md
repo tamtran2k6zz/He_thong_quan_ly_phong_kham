@@ -50,61 +50,286 @@ Hệ thống **CMS-AI** được xây dựng nhằm giải quyết triệt để
 
 ---
 
-## 3. BIỂU ĐỒ USE CASE & LUỒNG NGHIỆP VỤ Y TẾ
+## 3. BIỂU ĐỒ USE CASE, ĐẶC TẢ USE CASE & BIỂU ĐỒ HOẠT ĐỘNG (UML)
 
-### 3.1. Sơ đồ Use Case Tổng quát
+### 3.1. Sơ đồ Use Case Hệ thống Chuẩn hóa (Use Case Diagram with <<include>> & <<extend>>)
 
-```
-+---------------------------------------------------------------------------------------------------+
-|                               HỆ THỐNG QUẢN LÝ PHÒNG KHÁM (CMS-AI)                                 |
-|                                                                                                   |
-|  [Admin] ---------> (Đăng nhập JWT & Phân quyền RBAC)                                             |
-|          ---------> (Quản lý Tài khoản & Danh mục Bác sĩ/Phòng/Thuốc)                             |
-|          ---------> (Giám sát Audit Logs & AI Invocation Logs)                                    |
-|          ---------> (Xem Báo cáo Thống kê & Doanh thu Quản trị)                                   |
-|                                                                                                   |
-|  [Lễ tân] --------> (Đăng ký Hồ sơ Bệnh nhân & Cấp mã BN-YYYYMMDD-XXXX)                           |
-|           --------> (Đặt lịch hẹn & Kiểm tra Xung đột Lịch khám)                                  |
-|           --------> (Tiếp đón & Đưa vào Hàng đợi Khám của Bác sĩ)                                 |
-|           --------> (Tra cứu Thủ tục qua AI Workflow Chatbot)                                     |
-|                                                                                                   |
-|  [Bác sĩ] --------> (Xem Hàng đợi Bệnh nhân & Tóm tắt AI Pre-visit Briefing)                      |
-|           --------> (Lập Phiếu khám: Sinh hiệu, Triệu chứng, ICD-10)                              |
-|           --------> (Chỉ định Dịch vụ / Cận lâm sàng)                                             |
-|           --------> (Kê đơn thuốc điện tử & Trừ tồn kho tự động)                                  |
-|           --------> (Sinh Hướng dẫn sau khám AI Discharge Instructions)                           |
-|                                                                                                   |
-|  [Kế toán] -------> (Tổng hợp Viện phí & Tính khấu trừ BHYT)                                      |
-|            -------> (Thực hiện Thu tiền: Tiền mặt / VietQR Chuyển khoản)                          |
-|            -------> (In Biên lai / Hóa đơn Dịch vụ Y tế)                                          |
-+---------------------------------------------------------------------------------------------------+
+Sơ đồ Use Case dưới đây mô hình hóa tường minh ranh giới hệ thống (System Boundary), 4 nhóm tác nhân nội bộ (Admin, Lễ tân, Bác sĩ, Kế toán), tác nhân bên ngoài (Bệnh nhân, Google Gemini AI) và phân định rõ mối quan hệ phụ thuộc bắt buộc (`<<include>>`) cùng mối quan hệ mở rộng có điều kiện (`<<extend>>`):
+
+```mermaid
+graph TD
+    %% Tác nhân (Actors)
+    subgraph ACTORS [TÁC NHÂN HỆ THỐNG]
+        A_ADMIN["👤 Quản trị viên (Admin)"]
+        A_RECEP["👩‍💼 Lễ tân (Receptionist)"]
+        A_DOC["👨‍⚕️ Bác sĩ (Doctor)"]
+        A_ACC["💰 Kế toán / Thu ngân"]
+        A_PAT["🧑 Bệnh nhân (Khách hàng)"]
+        A_AI["🤖 Google Gemini API (External)"]
+    end
+
+    %% Ranh giới hệ thống
+    subgraph SYSTEM_BOUNDARY ["🏥 HỆ THỐNG QUẢN LÝ PHÒNG KHÁM THÔNG MINH (CMS-AI)"]
+        %% Core Use Cases
+        UC_LOGIN(["UC-00: Đăng nhập & Xác thực JWT"]):::coreUC
+        
+        %% Receptionist Use Cases
+        UC_REG_PAT(["UC-01: Đăng ký & Tra cứu Bệnh nhân"]):::recepUC
+        UC_BOOK_APPT(["UC-02: Đặt & Điều phối Lịch hẹn"]):::recepUC
+        UC_CONFLICT(["UC-03: Kiểm tra Xung đột Lịch khám"]):::coreUC
+        UC_CHECKIN(["UC-04: Tiếp đón & Cấp số Hàng đợi"]):::recepUC
+        UC_FAQ(["UC-05: Tra cứu Thủ tục qua AI Chatbot"]):::aiUC
+        
+        %% Doctor Use Cases
+        UC_VIEW_QUEUE(["UC-06: Xem Hàng đợi Phòng khám"]):::docUC
+        UC_PRE_VISIT(["UC-07: Xem Tóm tắt Bệnh sử AI Pre-visit"]):::aiUC
+        UC_EXAM(["UC-08: Khám lâm sàng & Chẩn đoán ICD-10"]):::docUC
+        UC_ORDER_TEST(["UC-09: Chỉ định Dịch vụ Cận lâm sàng"]):::docUC
+        UC_PRESCRIBE(["UC-10: Kê đơn thuốc điện tử"]):::docUC
+        UC_ALLERGY_WARN(["UC-11: Cảnh báo Tương tác & Dị ứng"]):::coreUC
+        UC_DISCHARGE(["UC-12: Sinh Hướng dẫn Dặn dò AI Discharge"]):::aiUC
+        
+        %% Accountant Use Cases
+        UC_GEN_INV(["UC-13: Tổng hợp Hóa đơn Viện phí"]):::accUC
+        UC_CALC_BHYT(["UC-14: Tính toán Khấu trừ BHYT"]):::coreUC
+        UC_PAY_VIETQR(["UC-15: Thanh toán & Sinh mã VietQR"]):::accUC
+        UC_PRINT_INV(["UC-16: In Biên lai / Hóa đơn A4-A5"]):::accUC
+        
+        %% Admin Use Cases
+        UC_MAN_USER(["UC-17: Quản lý Người dùng & RBAC"]):::adminUC
+        UC_MAN_CLINIC(["UC-18: Quản lý Chuyên khoa, Phòng & Ca"]):::adminUC
+        UC_MAN_DRUG(["UC-19: Quản lý Kho Dược & Giá thuốc"]):::adminUC
+        UC_AUDIT(["UC-20: Giám sát Audit Logs & AI Logs"]):::adminUC
+        UC_STATS(["UC-21: Xem Báo cáo Doanh thu & Lượt khám"]):::adminUC
+        
+        %% AI Core Processing (Backend)
+        UC_PII_REDACT(["UC-22: Khử định danh PII 2 chiều"]):::aiUC
+        UC_GUARDRAIL(["UC-23: Kiểm tra Guardrails Y tế & Disclaimer"]):::aiUC
+    end
+
+    %% Liên kết Actor -> Primary Use Cases
+    A_ADMIN --> UC_LOGIN
+    A_ADMIN --> UC_MAN_USER
+    A_ADMIN --> UC_MAN_CLINIC
+    A_ADMIN --> UC_MAN_DRUG
+    A_ADMIN --> UC_AUDIT
+    A_ADMIN --> UC_STATS
+
+    A_RECEP --> UC_LOGIN
+    A_RECEP --> UC_REG_PAT
+    A_RECEP --> UC_BOOK_APPT
+    A_RECEP --> UC_CHECKIN
+    A_RECEP --> UC_FAQ
+
+    A_DOC --> UC_LOGIN
+    A_DOC --> UC_VIEW_QUEUE
+    A_DOC --> UC_EXAM
+    A_DOC --> UC_ORDER_TEST
+    A_DOC --> UC_PRESCRIBE
+
+    A_ACC --> UC_LOGIN
+    A_ACC --> UC_GEN_INV
+    A_ACC --> UC_PAY_VIETQR
+
+    A_PAT -.->|Tương tác gián tiếp / Đặt hẹn| UC_BOOK_APPT
+    A_PAT -.->|Hỏi thông tin hành chính| UC_FAQ
+
+    %% Quan hệ <<include>> (Bắt buộc phải thực hiện)
+    UC_BOOK_APPT -.->|"<<include>>"| UC_CONFLICT
+    UC_BOOK_APPT -.->|"<<include>>"| UC_LOGIN
+    UC_CHECKIN -.->|"<<include>>"| UC_REG_PAT
+    UC_EXAM -.->|"<<include>>"| UC_LOGIN
+    UC_PRESCRIBE -.->|"<<include>>"| UC_EXAM
+    UC_GEN_INV -.->|"<<include>>"| UC_CALC_BHYT
+    UC_GEN_INV -.->|"<<include>>"| UC_LOGIN
+    UC_FAQ -.->|"<<include>>"| UC_PII_REDACT
+    UC_PRE_VISIT -.->|"<<include>>"| UC_PII_REDACT
+    UC_DISCHARGE -.->|"<<include>>"| UC_PII_REDACT
+    UC_PII_REDACT -.->|"<<include>>"| UC_GUARDRAIL
+    UC_GUARDRAIL -.->|Gửi Prompt ẩn danh| A_AI
+
+    %% Quan hệ <<extend>> (Mở rộng tùy chọn / Có điều kiện)
+    UC_ALLERGY_WARN -.->|"<<extend>> (Khi phát hiện dị ứng)"| UC_PRESCRIBE
+    UC_PRE_VISIT -.->|"<<extend>> (Khi mở ca khám)"| UC_EXAM
+    UC_DISCHARGE -.->|"<<extend>> (Khi hoàn tất đơn thuốc)"| UC_EXAM
+    UC_ORDER_TEST -.->|"<<extend>> (Khi cần cận lâm sàng)"| UC_EXAM
+    UC_PAY_VIETQR -.->|"<<extend>> (Chọn CK Ngân hàng)"| UC_GEN_INV
+    UC_PRINT_INV -.->|"<<extend>> (Sau khi thanh toán xong)"| UC_GEN_INV
+
+    %% Class styling
+    classDef coreUC fill:#f1f5f9,stroke:#64748b,stroke-width:1px,color:#0f172a;
+    classDef recepUC fill:#ecfdf5,stroke:#10b981,stroke-width:1.5px,color:#065f46;
+    classDef docUC fill:#eff6ff,stroke:#3b82f6,stroke-width:1.5px,color:#1e40af;
+    classDef accUC fill:#fffbeb,stroke:#f59e0b,stroke-width:1.5px,color:#92400e;
+    classDef adminUC fill:#faf5ff,stroke:#a855f7,stroke-width:1.5px,color:#6b21a8;
+    classDef aiUC fill:#fdf2f8,stroke:#ec4899,stroke-width:1.5px,color:#831843;
 ```
 
-### 3.2. Luồng Nghiệp vụ Y tế Khép kín (End-to-End Clinical Flow)
+---
 
+### 3.2. Bảng Đặc tả Use Case Chi tiết (Use Case Specifications)
+
+Để phục vụ công tác kiểm thử và nghiệm thu phần mềm chính xác, 3 Use Case nghiệp vụ quan trọng nhất được đặc tả theo biểu mẫu chuẩn IEEE 830:
+
+#### BẢNG ĐẶC TẢ UC-02: ĐẶT LỊCH HẸN & KIỂM TRA XUNG ĐỘT LỊCH KHÁM
+| Thuộc tính | Chi tiết đặc tả |
+| :--- | :--- |
+| **Mã Use Case / Tên** | **UC-02: Đặt lịch hẹn khám bệnh (Appointment Booking & Conflict Detection)** |
+| **Tác nhân chính (Actor)**| Lễ tân phòng khám (Receptionist) / Bệnh nhân (qua tổng đài/cổng trực tuyến) |
+| **Tác nhân hỗ trợ** | Bác sĩ chuyên khoa, Hệ thống kiểm tra xung đột thời gian (Conflict Engine) |
+| **Mục tiêu (Goal)** | Đặt hẹn khung giờ khám cho bệnh nhân, đảm bảo không trùng bác sĩ và không trùng phòng khám. |
+| **Tiền điều kiện (Pre-conditions)** | 1. Lễ tân đã đăng nhập vào hệ thống với vai trò `Receptionist`.<br>2. Bệnh nhân đã có mã hồ sơ định danh (`medical_code`) trên hệ thống.<br>3. Bác sĩ có lịch phân ca trực (`Shift`) hoạt động trong ngày được chọn. |
+| **Hậu điều kiện (Post-conditions)** | 1. Lịch hẹn mới được ghi nhận vào CSDL với trạng thái `PENDING` hoặc `CONFIRMED`.<br>2. Khung giờ của Bác sĩ và Buồng khám được đánh dấu đã giữ chỗ.<br>3. Hệ thống sinh số thứ tự dự kiến và gửi thông tin xác nhận. |
+| **Luồng sự kiện chính (Happy Path)** | 1. Lễ tân nhập Số điện thoại / CCCD để tra cứu bệnh nhân. Hệ thống hiển thị thông tin bệnh nhân.<br>2. Lễ tân chọn Chuyên khoa khám, Bác sĩ phụ trách và Ngày khám mong muốn.<br>3. Hệ thống tự động truy vấn ca trực của bác sĩ và hiển thị danh sách các khung giờ còn trống (mỗi slot 30 phút).<br>4. Lễ tân chọn khung giờ (ví dụ: `09:00 - 09:30`), nhập lý do khám bệnh.<br>5. Lễ tân nhấn **"Xác nhận đặt lịch"**.<br>6. Hệ thống thực thi `<<include>> UC-03: Kiểm tra xung đột lịch` trên 2 chiều (Bác sĩ & Phòng).<br>7. Hệ thống xác nhận không có xung đột, lưu bản ghi vào CSDL, sinh số thứ tự khám và hiển thị thông báo thành công. |
+| **Luồng rẽ nhánh (Alternative Flows)** | **A1. Bệnh nhân chưa có hồ sơ trên hệ thống:** Tại Bước 1, hệ thống không tìm thấy kết quả. Lễ tân thực thi `<<include>> UC-01: Đăng ký bệnh nhân mới`, nhập thông tin cá nhân và tiếp tục quay lại Bước 2.<br>**A2. Bệnh nhân yêu cầu chọn bác sĩ bất kỳ còn trống:** Tại Bước 2, lễ tân chọn chức năng *"Tìm bác sĩ có lịch trống sớm nhất"* theo chuyên khoa. |
+| **Luồng ngoại lệ (Exception Flows)** | **E1. Xung đột lịch bác sĩ:** Tại Bước 6, bác sĩ đã có lịch hẹn khác giao thoa thời gian (`Start_A < End_B AND End_A > Start_B`). Hệ thống từ chối lưu, hiển thị cảnh báo đỏ: *"Bác sĩ đã có lịch hẹn từ [giờ]. Vui lòng chọn khung giờ khác."* và đề xuất các khung giờ kế tiếp.<br>**E2. Buồng khám đã kín chỗ:** Phòng khám được chọn đang tiếp nhận ca khác. Hệ thống thông báo xung đột buồng khám và gợi ý chuyển sang phòng khám dự phòng cùng chuyên khoa.<br>**E3. Khung giờ nằm ngoài ca trực:** Bác sĩ không có ca trực trong khung giờ yêu cầu. Hệ thống cảnh báo và ngăn chặn gửi yêu cầu. |
+
+---
+
+#### BẢNG ĐẶC TẢ UC-08: KHÁM BỆNH LÂM SÀNG, KÊ ĐƠN & TRỢ LÝ AI
+| Thuộc tính | Chi tiết đặc tả |
+| :--- | :--- |
+| **Mã Use Case / Tên** | **UC-08: Khám bệnh lâm sàng, Kê đơn điện tử & Sinh dặn dò sau khám (Clinical Consultation & AI)** |
+| **Tác nhân chính (Actor)**| Bác sĩ chuyên khoa (Doctor) |
+| **Tác nhân hỗ trợ** | Trợ lý AI Hành chính (Google Gemini Live), Kho dược phòng khám |
+| **Mục tiêu (Goal)** | Ghi nhận sinh hiệu, chẩn đoán bệnh theo mã ICD-10, kê đơn thuốc an toàn và tự động tạo phiếu dặn dò sau khám. |
+| **Tiền điều kiện (Pre-conditions)** | 1. Bác sĩ đã đăng nhập tài khoản có vai trò `Doctor`.<br>2. Bệnh nhân đã được tiếp đón và đang nằm trong danh sách hàng đợi (`CHECKED_IN`). |
+| **Hậu điều kiện (Post-conditions)** | 1. Phiếu khám được lưu với trạng thái `COMPLETED`.<br>2. Đơn thuốc điện tử được tạo, số lượng tồn kho dược được cập nhật/khóa giữ chỗ.<br>3. Hướng dẫn dặn dò sau khám được đính kèm vào bệnh án.<br>4. Tự động chuyển giao hồ sơ sang bộ phận Thu ngân với trạng thái `PENDING_PAYMENT`. |
+| **Luồng sự kiện chính (Happy Path)** | 1. Bác sĩ chọn bệnh nhân kế tiếp từ hàng đợi phòng khám.<br>2. Hệ thống kích hoạt `<<extend>> UC-07: Tóm tắt bệnh sử AI Pre-visit`, hiển thị nhanh lịch sử điều trị cũ, cảnh báo dị ứng thuốc và bệnh mạn tính trong 10 giây.<br>3. Bác sĩ thăm khám, nhập các chỉ số sinh hiệu (Huyết áp, Mạch, Thân nhiệt, Chiều cao, Cân nặng). Hệ thống tự động tính chỉ số BMI và cảnh báo tình trạng thể trạng.<br>4. Bác sĩ tìm kiếm và chọn Mã chẩn đoán quốc tế ICD-10 (ví dụ `J06.9`).<br>5. Bác sĩ tìm kiếm thuốc trong danh mục kho dược, nhập liều dùng, số lượng, cách dùng.<br>6. Bác sĩ nhấn nút **"Sinh hướng dẫn sau khám bằng AI"** (`<<extend>> UC-12`). Hệ thống gửi dữ liệu đã khử PII đến Google Gemini và hiển thị lịch uống thuốc chi tiết kèm dặn dò chế độ ăn uống, dấu hiệu cấp cứu.<br>7. Bác sĩ xem xét, chỉnh sửa nếu cần và nhấn **"Hoàn tất ca khám"**.<br>8. Hệ thống lưu toàn bộ bệnh án, trừ tồn kho thuốc và tự động chuyển hóa đơn sang phân hệ Kế toán. |
+| **Luồng rẽ nhánh (Alternative Flows)** | **A1. Bác sĩ chỉ định cận lâm sàng:** Tại Bước 4, bác sĩ chọn dịch vụ siêu âm/xét nghiệm máu (`<<extend>> UC-09`). Ca khám tạm dừng ở trạng thái `WAITING_RESULTS`. Sau khi có kết quả từ phòng xét nghiệm, bác sĩ mở lại ca khám để tiếp tục Bước 5. |
+| **Luồng ngoại lệ (Exception Flows)** | **E1. Cảnh báo dị ứng thuốc nghiêm trọng (`<<extend>> UC-11`):** Tại Bước 5, bác sĩ chọn thuốc nhóm Penicillin trong khi hồ sơ bệnh nhân ghi nhận có dị ứng thuốc này. Hệ thống hiển thị hộp thoại cảnh báo nguy hiểm màu đỏ: *"CẢNH BÁO DỊ ỨNG: Bệnh nhân có tiền sử dị ứng với [Tên thuốc]!"* và yêu cầu bác sĩ xác nhận hoặc đổi thuốc an toàn.<br>**E2. Hết tồn kho dược:** Số lượng kê đơn vượt quá tồn kho khả dụng. Hệ thống thông báo không đủ thuốc và hiển thị số lượng tồn tối đa hiện có.<br>**E3. Lỗi kết nối AI Engine:** Mạng chập chờn hoặc API Gemini bận. Hệ thống tự động kích hoạt **Deterministic Mock Fallback** đảm bảo sinh hướng dẫn mẫu ngoại tuyến trong 1 giây, không làm gián đoạn buổi khám. |
+
+---
+
+#### BẢNG ĐẶC TẢ UC-13: TỔNG HỢP VIỆN PHÍ, KHẤU TRỪ BHYT & THANH TOÁN VIETQR
+| Thuộc tính | Chi tiết đặc tả |
+| :--- | :--- |
+| **Mã Use Case / Tên** | **UC-13: Quản lý viện phí, Khấu trừ BHYT & Thanh toán VietQR (Medical Billing & VietQR Payment)** |
+| **Tác nhân chính (Actor)**| Kế toán / Thu ngân (Accountant) |
+| **Tác nhân hỗ trợ** | Cổng thanh toán Ngân hàng (VietQR / Napas), Hệ thống giám định BHYT |
+| **Mục tiêu (Goal)** | Tổng hợp toàn bộ chi phí khám chữa bệnh, áp dụng chính sách giảm trừ bảo hiểm và thực hiện thu tiền nhanh chóng. |
+| **Tiền điều kiện (Pre-conditions)** | 1. Bác sĩ đã hoàn tất ca khám (`MedicalRecord.status = COMPLETED`).<br>2. Kế toán đăng nhập hệ thống với vai trò `Accountant`. |
+| **Hậu điều kiện (Post-conditions)** | 1. Hóa đơn chuyển trạng thái thành `PAID`.<br>2. Bản ghi giao dịch thanh toán được ghi nhận vào sổ cái CSDL.<br>3. In biên lai tài chính cho bệnh nhân để làm thủ tục lĩnh thuốc. |
+| **Luồng sự kiện chính (Happy Path)** | 1. Kế toán mở danh sách chờ thanh toán trên giao diện Thu ngân. Hệ thống hiển thị danh sách hóa đơn `PENDING` theo thời gian thực.<br>2. Kế toán chọn bệnh nhân. Hệ thống tự động tổng hợp chi tiết: Tiền khám chuyên khoa + Tiền xét nghiệm + Tiền thuốc kê đơn.<br>3. Hệ thống thực thi `<<include>> UC-14: Tính toán BHYT`, tự động đối soát loại thẻ BHYT (đúng tuyến hưởng 80% - 100%) và tính ra số tiền bảo hiểm chi trả cùng số tiền bệnh nhân đồng chi trả.<br>4. Bệnh nhân chọn hình thức chuyển khoản ngân hàng. Kế toán nhấn **"Tạo mã VietQR"** (`<<extend>> UC-15`).<br>5. Hệ thống hiển thị mã QR động chuẩn Napas247 chứa chính xác số tiền cần trả và nội dung chuyển khoản.<br>6. Bệnh nhân quét mã thanh toán thành công. Kế toán nhấn **"Xác nhận đã nhận tiền"**.<br>7. Hệ thống cập nhật hóa đơn sang `PAID`, giải phóng đơn thuốc để dược sĩ phát thuốc và tự động mở cửa sổ in hóa đơn tài chính chuẩn A4/A5 (`<<extend>> UC-16`). |
+| **Luồng rẽ nhánh (Alternative Flows)** | **A1. Bệnh nhân thanh toán bằng tiền mặt:** Tại Bước 4, bệnh nhân chọn tiền mặt. Kế toán nhập số tiền nhận, hệ thống tính tiền thừa cần trả lại và xuất hóa đơn ngay. |
+| **Luồng ngoại lệ (Exception Flows)** | **E1. Thẻ BHYT hết hạn hoặc sai tuyến:** Tại Bước 3, thẻ BHYT không hợp lệ trên cổng dữ liệu. Hệ thống cảnh báo và chuyển sang áp dụng 100% viện phí tự chi trả.<br>**E2. Hủy yêu cầu khám:** Bệnh nhân từ chối thực hiện xét nghiệm đã chỉ định. Kế toán thực hiện yêu cầu điều chỉnh hóa đơn, hệ thống ghi nhận lý do và cập nhật lại số tiền chính xác. |
+
+---
+
+### 3.3. Biểu đồ Hoạt động Nghiệp vụ Chuẩn UML có Làn bơi (Activity Diagram with Swimlanes)
+
+Biểu đồ mô hình hóa tiến trình vận hành khép kín liên phòng ban, phân tách rạch ròi trách nhiệm của 5 làn bơi (Swimlanes), thể hiện đầy đủ các điểm bắt đầu, rẽ nhánh điều kiện (Decision Nodes), hợp nhất luồng (Merge Nodes) và kết thúc (Final Activity Node):
+
+```mermaid
+flowchart TD
+    %% Định nghĩa các Làn bơi (Swimlanes)
+    subgraph LANE_PATIENT ["🧑 BỆNH NHÂN (PATIENT)"]
+        START((● Bắt đầu))
+        PAT_ARRIVE["1. Đến phòng khám / Đăng ký trực tuyến"]
+        PAT_CONFIRM["2. Xác nhận thông tin & Khai báo y tế"]
+        PAT_WAIT["3. Chờ tại sảnh theo số thứ tự"]
+        PAT_ENTER_ROOM["4. Vào phòng khám gặp Bác sĩ"]
+        PAT_DO_LAB["5. Đi làm xét nghiệm / Siêu âm"]
+        PAT_SCAN_QR["6. Quét mã VietQR / Trả tiền mặt"]
+        PAT_RECEIVE_MED["7. Nhận thuốc, hóa đơn & phiếu dặn dò"]
+        END_NODE(((◉ Kết thúc ca khám)))
+    end
+
+    subgraph LANE_RECEP ["👩‍💼 LỄ TÂN (RECEPTIONIST)"]
+        REC_SEARCH{"Kiểm tra bệnh nhân cũ hay mới?"}
+        REC_NEW_PAT["Đăng ký hồ sơ & Cấp mã BN"]
+        REC_GET_PAT["Tra cứu hồ sơ theo CCCD/SĐT"]
+        REC_CHECK_TIME{"Kiểm tra xung đột lịch khám?"}
+        REC_SELECT_SLOT["Chọn lại khung giờ / Bác sĩ khác"]
+        REC_DISPATCH["Tiếp đón, gán phòng & Cấp số hàng đợi"]
+    end
+
+    subgraph LANE_DOC ["👨‍⚕️ BÁC SĨ (DOCTOR)"]
+        DOC_CALL["Gọi bệnh nhân vào phòng khám"]
+        DOC_READ_SUMMARY["Đọc AI Pre-visit (tiền sử, dị ứng)"]
+        DOC_EXAM["Thăm khám lâm sàng & Đo sinh hiệu BMI"]
+        DOC_NEED_LAB{"Có cần cận lâm sàng?"}
+        DOC_ORDER["Chỉ định xét nghiệm / CĐHA"]
+        DOC_DIAGNOSE["Chẩn đoán bệnh theo mã ICD-10"]
+        DOC_PRESCRIBE["Kê đơn thuốc điện tử"]
+        DOC_ALLERGY_CHECK{"Kiểm tra cảnh báo dị ứng thuốc?"}
+        DOC_CHANGE_DRUG["Đổi loại thuốc an toàn khác"]
+        DOC_COMPLETE["Ký xác nhận & Hoàn tất ca khám"]
+    end
+
+    subgraph LANE_AI ["🤖 TRỢ LÝ AI HÀNH CHÍNH (AI ENGINE)"]
+        AI_ANON["Khử định danh PII (Ẩn tên, CCCD, SĐT, BHYT)"]
+        AI_GEN_PRE["Sinh tóm tắt tiền sử bệnh án cho Bác sĩ"]
+        AI_GEN_DISCHARGE["Sinh hướng dẫn uống thuốc & dặn dò sau khám"]
+        AI_ATTACH_DISCLAIMER["Đính kèm Tuyên bố miễn trừ trách nhiệm y tế"]
+    end
+
+    subgraph LANE_ACC ["💰 KẾ TOÁN / THU NGÂN (ACCOUNTANT)"]
+        ACC_RECV["Nhận hồ sơ hoàn tất từ phòng khám"]
+        ACC_CALC["Tổng hợp viện phí & Khấu trừ BHYT"]
+        ACC_QR["Tạo mã VietQR động / Nhận tiền mặt"]
+        ACC_CONFIRM["Xác nhận thanh toán PAID & In hóa đơn"]
+    end
+
+    %% Luồng điều khiển liên làn bơi
+    START --> PAT_ARRIVE
+    PAT_ARRIVE --> REC_SEARCH
+    
+    REC_SEARCH -->|Bệnh nhân mới| REC_NEW_PAT
+    REC_SEARCH -->|Đã có hồ sơ| REC_GET_PAT
+    REC_NEW_PAT --> REC_CHECK_TIME
+    REC_GET_PAT --> REC_CHECK_TIME
+
+    REC_CHECK_TIME -->|Có xung đột| REC_SELECT_SLOT
+    REC_SELECT_SLOT --> REC_CHECK_TIME
+    REC_CHECK_TIME -->|Hợp lệ - Không xung đột| REC_DISPATCH
+    
+    REC_DISPATCH --> PAT_WAIT
+    PAT_WAIT --> DOC_CALL
+    DOC_CALL --> PAT_ENTER_ROOM
+
+    PAT_ENTER_ROOM --> AI_ANON
+    AI_ANON --> AI_GEN_PRE
+    AI_GEN_PRE --> DOC_READ_SUMMARY
+    
+    DOC_READ_SUMMARY --> DOC_EXAM
+    DOC_EXAM --> DOC_NEED_LAB
+    
+    DOC_NEED_LAB -->|Có chỉ định| DOC_ORDER
+    DOC_ORDER --> PAT_DO_LAB
+    PAT_DO_LAB --> DOC_DIAGNOSE
+    DOC_NEED_LAB -->|Không cần| DOC_DIAGNOSE
+
+    DOC_DIAGNOSE --> DOC_PRESCRIBE
+    DOC_PRESCRIBE --> DOC_ALLERGY_CHECK
+
+    DOC_ALLERGY_CHECK -->|Phát hiện dị ứng!| DOC_CHANGE_DRUG
+    DOC_CHANGE_DRUG --> DOC_PRESCRIBE
+    DOC_ALLERGY_CHECK -->|An toàn| AI_GEN_DISCHARGE
+
+    AI_GEN_DISCHARGE --> AI_ATTACH_DISCLAIMER
+    AI_ATTACH_DISCLAIMER --> DOC_COMPLETE
+
+    DOC_COMPLETE --> ACC_RECV
+    ACC_RECV --> ACC_CALC
+    ACC_CALC --> ACC_QR
+    ACC_QR --> PAT_SCAN_QR
+    PAT_SCAN_QR --> ACC_CONFIRM
+
+    ACC_CONFIRM --> PAT_RECEIVE_MED
+    PAT_RECEIVE_MED --> END_NODE
+
+    %% Định dạng trực quan
+    classDef startEnd fill:#0f172a,stroke:#334155,stroke-width:2px,color:#ffffff;
+    classDef decision fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#78350f;
+    classDef action fill:#ffffff,stroke:#cbd5e1,stroke-width:1.5px,color:#1e293b;
+    
+    class START,END_NODE startEnd;
+    class REC_SEARCH,REC_CHECK_TIME,DOC_NEED_LAB,DOC_ALLERGY_CHECK decision;
+    class PAT_ARRIVE,PAT_CONFIRM,PAT_WAIT,PAT_ENTER_ROOM,PAT_DO_LAB,PAT_SCAN_QR,PAT_RECEIVE_MED,REC_NEW_PAT,REC_GET_PAT,REC_SELECT_SLOT,REC_DISPATCH,DOC_CALL,DOC_READ_SUMMARY,DOC_EXAM,DOC_ORDER,DOC_DIAGNOSE,DOC_PRESCRIBE,DOC_CHANGE_DRUG,DOC_COMPLETE,AI_ANON,AI_GEN_PRE,AI_GEN_DISCHARGE,AI_ATTACH_DISCLAIMER,ACC_RECV,ACC_CALC,ACC_QR,ACC_CONFIRM action;
 ```
-[Bệnh nhân đến / Đặt lịch trước]
-               |
-               v
- [BƯỚC 1: LỄ TÂN] ----------------> Tạo/Tra cứu Hồ sơ bệnh nhân -> Đặt lịch (Kiểm tra xung đột)
-                                    -> Tiếp đón, gán vào Hàng đợi phòng khám chuyên khoa
-               |
-               v
- [BƯỚC 2: BÁC SĨ] -----------------> Mở Hàng đợi -> Xem AI Pre-visit Summary (Lịch sử, dị ứng)
-                                    -> Khám lâm sàng, đo sinh hiệu, chẩn đoán mã ICD-10
-                                    -> Chỉ định cận lâm sàng (nếu có)
-                                    -> Kê đơn thuốc điện tử
-                                    -> Sinh dặn dò sau khám AI Discharge Instructions
-               |
-               v
- [BƯỚC 3: KẾ TOÁN] ----------------> Tiếp nhận hồ sơ khám hoàn tất -> Kiểm tra bảo hiểm BHYT
-                                    -> Tổng hợp chi phí viện phí & khấu trừ bảo hiểm
-                                    -> Thu tiền (Tiền mặt / Quét mã VietQR)
-                                    -> In Phiếu thu / Hóa đơn viện phí
-               |
-               v
- [BƯỚC 4: HOÀN TẤT] ---------------> Bệnh nhân nhận thuốc, hóa đơn và hướng dẫn chăm sóc xuất viện
-```
+
+---
 
 ---
 

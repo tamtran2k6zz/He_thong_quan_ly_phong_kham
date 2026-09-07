@@ -287,3 +287,350 @@ sequenceDiagram
     DB-->>API: Thành công
     API-->>UI: Hóa đơn đã thanh toán -> Mở Modal In Biên lai A4/A5
 ```
+
+---
+
+## 8. BIỂU ĐỒ LỚP HƯỚNG ĐỐI TƯỢNG (UML CLASS DIAGRAM)
+
+Biểu đồ lớp dưới đây mô hình hóa cấu trúc hướng đối tượng (OOP) toàn diện của hệ thống CMS-AI, phân định rõ các tầng thực thể (Domain Entities), tầng dịch vụ/kiểm soát (Service Layer), và tầng AI Providers. Biểu đồ chỉ rõ thuộc tính, phương thức, phạm vi truy cập (`+` public, `-` private, `#` protected) cùng các loại quan hệ chuẩn UML:
+- **Kế thừa (Inheritance `<|--`):** Các AI Provider cụ thể kế thừa từ Abstract Interface `AIProvider`.
+- **Chứa chặt (Composition `*--`):** Vòng đời đối tượng con phụ thuộc hoàn toàn vào đối tượng cha (ví dụ: Xóa `Prescription` sẽ tự động xóa các `PrescriptionItem`; Xóa `MedicalRecord` sẽ xóa các `ServiceOrder`).
+- **Chứa lỏng (Aggregation `o--`):** Đối tượng con có thể tồn tại độc lập (ví dụ: `Clinic` tổng hợp `Doctor`; `AdminAIService` tổng hợp `AIProvider`).
+- **Liên kết (Association `-->`):** Mối quan hệ tương tác logic giữa các thực thể độc lập.
+
+```mermaid
+classDiagram
+    %% ==========================================
+    %% TẦNG AI PROVIDERS (INHERITANCE & INTERFACE)
+    %% ==========================================
+    class AIProvider {
+        <<interface>>
+        +str model_name
+        +generate(prompt: str, system_prompt: str)* AIProviderResponse
+    }
+
+    class CloudAIProvider {
+        -str api_key
+        -str provider_type
+        -int timeout
+        +generate(prompt: str, system_prompt: str) AIProviderResponse
+        -_call_gemini(prompt, system_prompt, start_time) AIProviderResponse
+        -_call_openai(prompt, system_prompt, start_time) AIProviderResponse
+    }
+
+    class MockDeterministicAIProvider {
+        +generate(prompt: str, system_prompt: str) AIProviderResponse
+        -_handle_faq(prompt, prompt_lower) str
+        -_handle_briefing(prompt) str
+        -_handle_discharge(prompt) str
+    }
+
+    class OllamaAIProvider {
+        -str base_url
+        +generate(prompt: str, system_prompt: str) AIProviderResponse
+    }
+
+    AIProvider <|-- CloudAIProvider : Inheritance
+    AIProvider <|-- MockDeterministicAIProvider : Inheritance
+    AIProvider <|-- OllamaAIProvider : Inheritance
+
+    %% ==========================================
+    %% TẦNG DỊCH VỤ NGHIỆP VỤ (SERVICE LAYER)
+    %% ==========================================
+    class AdminAIService {
+        -AIProvider _provider
+        +generate_pre_visit_summary(patient_id, patient_data, db) dict
+        +answer_faq(question, db, conversation_id) dict
+        +generate_discharge_instructions(record_id, discharge_data, db) dict
+        -_log_invocation(db, feature_name, prompt, response, latency) AIInvocationLog
+    }
+
+    class ConflictChecker {
+        +check_appointment_conflict(db, doctor_id, clinic_id, start_time, end_time, exclude_id) tuple[bool, str]
+    }
+
+    class PIIAnonymizer {
+        +anonymize(text: str, patient_name: str) tuple[str, dict]
+    }
+
+    class AdminAIGuardrails {
+        +check_input_safety(text: str) tuple[bool, str, str]
+        +append_disclaimer(content: str) str
+    }
+
+    AdminAIService o-- AIProvider : Aggregation
+    AdminAIService ..> PIIAnonymizer : Uses
+    AdminAIService ..> AdminAIGuardrails : Uses
+
+    %% ==========================================
+    %% TẦNG THỰC THỂ DỮ LIỆU (DOMAIN ENTITIES)
+    %% ==========================================
+    class User {
+        +int id
+        +str username
+        -str password_hash
+        +str full_name
+        +str email
+        +str role
+        +bool is_active
+        +datetime created_at
+        +verify_password(plain_password: str) bool
+        +has_role(required_role: str) bool
+    }
+
+    class Specialty {
+        +int id
+        +str name
+        +str code
+        +str description
+    }
+
+    class Clinic {
+        +int id
+        +str name
+        +str room_number
+        +int specialty_id
+        +str location
+        +bool is_active
+        +is_available(start_time: datetime, end_time: datetime) bool
+    }
+
+    class Doctor {
+        +int id
+        +int user_id
+        +int specialty_id
+        +int clinic_id
+        +str qualification
+        +str title
+        +int max_patients_per_shift
+        +get_schedule(target_date: date) list
+    }
+
+    class Shift {
+        +int id
+        +int doctor_id
+        +int clinic_id
+        +int day_of_week
+        +time start_time
+        +time end_time
+    }
+
+    class Patient {
+        +int id
+        +str patient_code
+        +str full_name
+        +date date_of_birth
+        +str gender
+        +str phone
+        -str identity_card
+        -str insurance_number
+        +str address
+        +str medical_history
+        +str drug_allergies
+        +calculate_age() int
+        +has_drug_allergy(drug_name: str) bool
+    }
+
+    class Appointment {
+        +int id
+        +int patient_id
+        +int doctor_id
+        +int clinic_id
+        +datetime start_time
+        +datetime end_time
+        +str status
+        +int queue_number
+        +str symptoms
+        +confirm() void
+        +check_in() void
+        +cancel(reason: str) void
+    }
+
+    class MedicalRecord {
+        +int id
+        +int patient_id
+        +int doctor_id
+        +int appointment_id
+        +str status
+        +str chief_complaint
+        +str clinical_notes
+        +str diagnosis_icd10
+        +str icd10_code
+        +str blood_pressure
+        +int heart_rate
+        +float temperature
+        +float weight
+        +float height
+        +calculate_bmi() dict
+        +complete_examination() void
+    }
+
+    class ServiceOrder {
+        +int id
+        +int medical_record_id
+        +str service_name
+        +float price
+        +str status
+        +str results
+    }
+
+    class Prescription {
+        +int id
+        +int medical_record_id
+        +int doctor_id
+        +str notes
+        +datetime created_at
+        +add_item(item: PrescriptionItem) void
+        +calculate_total() float
+    }
+
+    class PrescriptionItem {
+        +int id
+        +int prescription_id
+        +int medicine_id
+        +str dosage
+        +int quantity
+        +float unit_price
+        +str instructions
+        +get_subtotal() float
+    }
+
+    class Medicine {
+        +int id
+        +str name
+        +str active_ingredient
+        +str dosage_form
+        +str unit
+        +float unit_price
+        +int stock_quantity
+        +check_stock(requested_qty: int) bool
+        +deduct_stock(qty: int) void
+    }
+
+    class Invoice {
+        +int id
+        +int medical_record_id
+        +int patient_id
+        +float total_amount
+        +float insurance_discount
+        +float patient_payment
+        +str status
+        +str payment_method
+        +calculate_bhyt_co_pay(insurance_rate: float) float
+        +mark_paid(method: str) void
+        +generate_vietqr_payload() dict
+    }
+
+    %% ==========================================
+    %% MỐI QUAN HỆ GIỮA CÁC THỰC THỂ (RELATIONSHIPS)
+    %% ==========================================
+    User "1" <-- "1" Doctor : Associated User Account
+    Specialty "1" <-- "*" Doctor : Belongs to
+    Specialty "1" <-- "*" Clinic : Contains
+    Clinic "1" o-- "*" Doctor : Aggregation (Hosts)
+    Doctor "1" *-- "*" Shift : Composition (Working Shifts)
+    Clinic "1" *-- "*" Shift : Hosts
+
+    Patient "1" <-- "*" Appointment : Books
+    Doctor "1" <-- "*" Appointment : Attends
+    Clinic "1" <-- "*" Appointment : Scheduled at
+
+    Patient "1" <-- "*" MedicalRecord : Has record history
+    Doctor "1" <-- "*" MedicalRecord : Examines
+    Appointment "1" <-- "0..1" MedicalRecord : Originates from
+
+    MedicalRecord "1" *-- "*" ServiceOrder : Composition (Orders Lab Tests)
+    MedicalRecord "1" *-- "0..1" Prescription : Composition (Prescribes)
+    Prescription "1" *-- "*" PrescriptionItem : Composition (Contains items)
+    Medicine "1" <-- "*" PrescriptionItem : Dispensed as
+
+    MedicalRecord "1" *-- "0..1" Invoice : Composition (Billed as)
+    Patient "1" <-- "*" Invoice : Billed to
+```
+
+---
+
+## 9. BIỂU ĐỒ TRIỂN KHAI CHUẨN UML (UML DEPLOYMENT DIAGRAM)
+
+Biểu đồ triển khai chuẩn UML mô hình hóa cấu trúc vật lý của hạ tầng vận hành hệ thống, bao gồm các nút thiết bị phần cứng (`«device»`), môi trường thực thi ảo hóa container (`«execution environment»`), các thành phần phần mềm được đóng gói (`«artifact»`), cơ sở dữ liệu (`«database»`), cổng kết nối (Ports) và giao thức mạng truyền thông (Protocols):
+
+```mermaid
+graph TD
+    %% ==========================================
+    %% CLIENT TIER
+    %% ==========================================
+    subgraph NODE_CLIENT ["«device» MÁY TRẠM NGƯỜI DÙNG (CLIENT WORKSTATION)"]
+        subgraph ENV_BROWSER ["«execution environment» Trình duyệt Web (Edge / Chrome / Safari)"]
+            ARTIFACT_UI["«artifact»\nReact 18 SPA Bundle\n(HTML5, Tailwind CSS, JS Assets)"]
+            INTERCEPTOR["«component»\nAxios HTTP Interceptor\n(JWT Bearer Storage)"]
+        end
+    end
+
+    %% ==========================================
+    %% PRODUCTION DOCKER HOST SERVER
+    %% ==========================================
+    subgraph NODE_HOST ["«device» MÁY CHỦ TRIỂN KHAI DOCKER (DOCKER HOST SERVER)"]
+        
+        subgraph CONT_FRONTEND ["«execution environment» Container: clinic_frontend\n[Image: nginx:alpine - Port 3000/3001]"]
+            ARTIFACT_NGINX["«artifact»\nNginx Reverse Proxy & Static Host\n(/usr/share/nginx/html)"]
+        end
+
+        subgraph CONT_BACKEND ["«execution environment» Container: clinic_backend\n[Image: python:3.11-slim - Port 8000]"]
+            subgraph ASGI_SERVER ["«execution environment» Uvicorn ASGI Server"]
+                ARTIFACT_FASTAPI["«artifact»\nFastAPI Application Package\n(API Routers, Pydantic Validation)"]
+                ARTIFACT_CORE["«artifact»\nCore Engines\n(RBAC, ConflictChecker, PII Sanitizer)"]
+                ARTIFACT_ORM["«artifact»\nSQLAlchemy 2.0 ORM Engine"]
+            end
+        end
+
+        subgraph CONT_DATABASE ["«execution environment» Container: clinic_mysql\n[Image: mysql:8.0 - Port 3306 -> Host 3307]"]
+            DB_ENGINE["«database system» MySQL 8.0 Community Server"]
+            subgraph VOL_MYSQL ["«storage volume» mysql_data (Local Persistent SSD)"]
+                DB_DATA["«database»\nclinic_db\n(14 Relational 3NF Tables, Indexes, Binlog)"]
+            end
+        end
+
+        subgraph CONT_PGADMIN ["«execution environment» Container: clinic_pgadmin\n[Port 5050]"]
+            ARTIFACT_GUI["«artifact» Database Web Management Console"]
+        end
+    end
+
+    %% ==========================================
+    %% EXTERNAL CLOUD SERVICE TIER
+    %% ==========================================
+    subgraph NODE_CLOUD ["«cloud service» GOOGLE CLOUD PLATFORM (GCP)"]
+        subgraph ENV_GEMINI ["«execution environment» Google Generative AI Cloud Cluster"]
+            API_GEMINI["«cloud API»\nGemini 3.6 Flash Engine\n(Generative Content REST Endpoint)"]
+        end
+    end
+
+    %% ==========================================
+    %% MẠNG & GIAO THỨC TRUYỀN THÔNG (PROTOCOLS)
+    %% ==========================================
+    ARTIFACT_UI -->|HTTPS / Cổng 3000 / Static Content| ARTIFACT_NGINX
+    INTERCEPTOR -->|HTTP REST / JSON / JWT Header / Cổng 8000| ARTIFACT_FASTAPI
+
+    ARTIFACT_FASTAPI --> ARTIFACT_CORE
+    ARTIFACT_CORE --> ARTIFACT_ORM
+    
+    ARTIFACT_ORM -->|TCP/IP / PyMySQL Driver / Cổng 3306| DB_ENGINE
+    DB_ENGINE --> DB_DATA
+
+    ARTIFACT_GUI -->|TCP/IP / Port 3306| DB_ENGINE
+
+    ARTIFACT_CORE -->|HTTPS / TLS 1.3 / Port 443 / JSON Payload\n[Dữ liệu đã Khử PII 100%]| API_GEMINI
+
+    %% Styling
+    classDef deviceNode fill:#f8fafc,stroke:#334155,stroke-width:2px,color:#0f172a;
+    classDef containerNode fill:#eff6ff,stroke:#2563eb,stroke-width:1.5px,color:#1e40af;
+    classDef artifactNode fill:#ffffff,stroke:#64748b,stroke-width:1px,color:#0f172a;
+    classDef dbNode fill:#f0fdf4,stroke:#16a34a,stroke-width:1.5px,color:#14532d;
+    classDef cloudNode fill:#fdf4ff,stroke:#a855f7,stroke-width:1.5px,color:#581c87;
+
+    class NODE_CLIENT,NODE_HOST deviceNode;
+    class CONT_FRONTEND,CONT_BACKEND,CONT_PGADMIN containerNode;
+    class CONT_DATABASE,VOL_MYSQL dbNode;
+    class NODE_CLOUD cloudNode;
+    class ARTIFACT_UI,INTERCEPTOR,ARTIFACT_NGINX,ARTIFACT_FASTAPI,ARTIFACT_CORE,ARTIFACT_ORM,ARTIFACT_GUI,API_GEMINI artifactNode;
+```
+

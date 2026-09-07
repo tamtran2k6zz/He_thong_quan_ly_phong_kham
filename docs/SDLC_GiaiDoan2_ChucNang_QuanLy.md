@@ -256,3 +256,233 @@ Tất cả các API đều có tiền tố chuẩn hóa `/api/v1` và trả về
 | `GET` | `/api/v1/stats/specialties` | Admin | Thống kê tỷ lệ phân bổ lượt khám theo từng chuyên khoa. |
 | `GET` | `/api/v1/audit/logs` | Admin | Danh sách nhật ký kiểm toán (Truy vết xem/sửa hồ sơ bệnh nhân). |
 | `GET` | `/api/v1/audit/ai-logs` | Admin | Danh sách nhật ký gọi AI (Prompt khử định danh, kết quả, latency). |
+
+---
+
+## 5. BIỂU ĐỒ LỚP HƯỚNG ĐỐI TƯỢNG (UML CLASS DIAGRAM)
+
+Mô hình hóa toàn diện cấu trúc hướng đối tượng các thực thể lâm sàng, dịch vụ kiểm soát và các AI Provider với các quan hệ Kế thừa (`<|--`), Chứa chặt (`*--`), Chứa lỏng (`o--`) và Liên kết (`-->`):
+
+```mermaid
+classDiagram
+    class AIProvider {
+        <<interface>>
+        +str model_name
+        +generate(prompt, system_prompt)* AIProviderResponse
+    }
+
+    class CloudAIProvider {
+        -str api_key
+        -str provider_type
+        +generate(prompt, system_prompt) AIProviderResponse
+    }
+
+    class MockDeterministicAIProvider {
+        +generate(prompt, system_prompt) AIProviderResponse
+    }
+
+    AIProvider <|-- CloudAIProvider
+    AIProvider <|-- MockDeterministicAIProvider
+
+    class AdminAIService {
+        -AIProvider _provider
+        +generate_pre_visit_summary() dict
+        +answer_faq() dict
+        +generate_discharge_instructions() dict
+    }
+
+    class ConflictChecker {
+        +check_appointment_conflict() tuple
+    }
+
+    AdminAIService o-- AIProvider
+
+    class User {
+        +int id
+        +str username
+        -str password_hash
+        +str role
+        +verify_password() bool
+        +has_role() bool
+    }
+
+    class Doctor {
+        +int id
+        +int user_id
+        +int specialty_id
+        +int clinic_id
+        +str qualification
+        +get_schedule() list
+    }
+
+    class Specialty {
+        +int id
+        +str name
+        +str code
+    }
+
+    class Clinic {
+        +int id
+        +str name
+        +str room_number
+        +is_available() bool
+    }
+
+    class Shift {
+        +int id
+        +int doctor_id
+        +int clinic_id
+        +int day_of_week
+        +time start_time
+        +time end_time
+    }
+
+    class Patient {
+        +int id
+        +str patient_code
+        +str full_name
+        +date dob
+        +str phone
+        -str identity_card
+        +str drug_allergies
+        +has_drug_allergy() bool
+    }
+
+    class Appointment {
+        +int id
+        +int patient_id
+        +int doctor_id
+        +int clinic_id
+        +datetime start_time
+        +datetime end_time
+        +str status
+        +int queue_number
+        +confirm() void
+        +check_in() void
+    }
+
+    class MedicalRecord {
+        +int id
+        +int patient_id
+        +int doctor_id
+        +str status
+        +str icd10_code
+        +float blood_pressure_systolic
+        +float bmi
+        +calculate_bmi() dict
+        +complete_examination() void
+    }
+
+    class ServiceOrder {
+        +int id
+        +int medical_record_id
+        +str service_name
+        +float price
+    }
+
+    class Prescription {
+        +int id
+        +int medical_record_id
+        +int doctor_id
+        +add_item() void
+        +calculate_total() float
+    }
+
+    class PrescriptionItem {
+        +int id
+        +int prescription_id
+        +int medicine_id
+        +int quantity
+        +float unit_price
+        +get_subtotal() float
+    }
+
+    class Medicine {
+        +int id
+        +str name
+        +float unit_price
+        +int stock_quantity
+        +check_stock() bool
+        +deduct_stock() void
+    }
+
+    class Invoice {
+        +int id
+        +int medical_record_id
+        +int patient_id
+        +float total_amount
+        +float insurance_discount
+        +float patient_payment
+        +str status
+        +mark_paid() void
+        +generate_vietqr_payload() dict
+    }
+
+    User "1" <-- "1" Doctor
+    Specialty "1" <-- "*" Doctor
+    Specialty "1" <-- "*" Clinic
+    Clinic "1" o-- "*" Doctor
+    Doctor "1" *-- "*" Shift
+    Clinic "1" *-- "*" Shift
+
+    Patient "1" <-- "*" Appointment
+    Doctor "1" <-- "*" Appointment
+    Clinic "1" <-- "*" Appointment
+
+    Patient "1" <-- "*" MedicalRecord
+    Doctor "1" <-- "*" MedicalRecord
+    Appointment "1" <-- "0..1" MedicalRecord
+
+    MedicalRecord "1" *-- "*" ServiceOrder
+    MedicalRecord "1" *-- "0..1" Prescription
+    Prescription "1" *-- "*" PrescriptionItem
+    Medicine "1" <-- "*" PrescriptionItem
+
+    MedicalRecord "1" *-- "0..1" Invoice
+    Patient "1" <-- "*" Invoice
+```
+
+---
+
+## 6. BIỂU ĐỒ TRIỂN KHAI VẬN HÀNH (UML DEPLOYMENT DIAGRAM)
+
+```mermaid
+graph TD
+    subgraph CLIENT_TIER ["«device» MÁY TRẠM NGƯỜI DÙNG"]
+        subgraph BROWSER ["«execution environment» Trình duyệt Web"]
+            ART_SPA["«artifact» React 18 SPA Bundle (Vite/Tailwind)"]
+            ART_AXIOS["«component» Axios Interceptor (JWT Token)"]
+        end
+    end
+
+    subgraph DOCKER_HOST ["«device» MÁY CHỦ DOCKER / LOCALHOST"]
+        subgraph C_WEB ["«execution environment» Container clinic_frontend (Port 3000/3001)"]
+            ART_NGINX["«artifact» Nginx Reverse Proxy"]
+        end
+
+        subgraph C_APP ["«execution environment» Container clinic_backend (Port 8000)"]
+            ART_UVICORN["«execution environment» Uvicorn ASGI Server"]
+            ART_FASTAPI["«artifact» FastAPI App + Pydantic v2"]
+            ART_CORE["«artifact» ConflictChecker + PII Sanitizer"]
+            ART_ORM["«artifact» SQLAlchemy 2.0 ORM Engine"]
+        end
+
+        subgraph C_DB ["«execution environment» Container clinic_mysql (Port 3307)"]
+            ART_MYSQL["«database system» MySQL 8.0 Server"]
+            ART_SCHEMA["«database» clinic_db (14 Tables, 3NF)"]
+        end
+    end
+
+    subgraph CLOUD_TIER ["«cloud provider» GOOGLE CLOUD PLATFORM"]
+        ART_GEMINI["«cloud API» Gemini 3.6 Flash Engine (Port 443)"]
+    end
+
+    ART_SPA -->|HTTPS / Port 3000| ART_NGINX
+    ART_AXIOS -->|HTTP REST / JSON / JWT / Port 8000| ART_FASTAPI
+    ART_FASTAPI --> ART_CORE
+    ART_CORE --> ART_ORM
+    ART_ORM -->|TCP/IP / Port 3306| ART_MYSQL
+    ART_MYSQL --> ART_SCHEMA
+    ART_CORE -->|HTTPS / TLS 1.3 / Port 443 (Khử PII 100%)| ART_GEMINI
+```
+

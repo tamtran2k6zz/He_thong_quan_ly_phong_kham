@@ -195,3 +195,171 @@ Hệ thống định nghĩa danh mục các Yêu cầu Chức năng chuẩn hóa
 | FR-STATS-001   | Thống kê Báo cáo   | Admin           | (Tổng hợp toàn bộ)          | GET /api/v1/stats/*             |
 +-----------------------------------------------------------------------------------------------------------------------+
 ```
+
+---
+
+## 4. MÔ HÌNH HÓA YÊU CẦU BẰNG UML (USE CASE & ACTIVITY DIAGRAM)
+
+### 4.1. Sơ đồ Use Case Tổng thể với Quan hệ Phụ thuộc `<<include>>` và `<<extend>>`
+
+```mermaid
+graph TD
+    subgraph ACTORS [TÁC NHÂN HỆ THỐNG]
+        A_ADMIN["👤 Admin"]
+        A_RECEP["👩‍💼 Lễ tân"]
+        A_DOC["👨‍⚕️ Bác sĩ"]
+        A_ACC["💰 Kế toán"]
+        A_PAT["🧑 Bệnh nhân"]
+        A_AI["🤖 Google Gemini"]
+    end
+
+    subgraph SYSTEM_BOUNDARY ["🏥 HỆ THỐNG PHÒNG KHÁM CMS-AI"]
+        UC_LOGIN(["UC-00: Đăng nhập JWT"]):::coreUC
+        UC_PAT(["UC-01: Đăng ký / Tra cứu Hồ sơ"]):::recepUC
+        UC_APPT(["UC-02: Đặt lịch hẹn"]):::recepUC
+        UC_CONFLICT(["UC-03: Kiểm tra Xung đột"]):::coreUC
+        UC_CHECKIN(["UC-04: Tiếp đón & Cấp số"]):::recepUC
+        UC_FAQ(["UC-05: AI FAQ Chatbot"]):::aiUC
+        
+        UC_EXAM(["UC-08: Khám bệnh & ICD-10"]):::docUC
+        UC_PRE_VISIT(["UC-07: Tóm tắt AI Pre-visit"]):::aiUC
+        UC_ORDER_TEST(["UC-09: Chỉ định Xét nghiệm"]):::docUC
+        UC_PRESCRIBE(["UC-10: Kê đơn thuốc"]):::docUC
+        UC_ALLERGY(["UC-11: Cảnh báo Dị ứng"]):::coreUC
+        UC_DISCHARGE(["UC-12: AI Hướng dẫn sau khám"]):::aiUC
+        
+        UC_BILL(["UC-13: Tổng hợp Hóa đơn"]):::accUC
+        UC_BHYT(["UC-14: Khấu trừ BHYT"]):::coreUC
+        UC_VIETQR(["UC-15: Thanh toán VietQR"]):::accUC
+        UC_PRINT(["UC-16: In Biên lai A4-A5"]):::accUC
+        
+        UC_PII(["UC-22: Khử định danh PII"]):::aiUC
+        UC_GUARD(["UC-23: Medical Guardrails"]):::aiUC
+    end
+
+    A_ADMIN --> UC_LOGIN
+    A_RECEP --> UC_LOGIN
+    A_RECEP --> UC_PAT
+    A_RECEP --> UC_APPT
+    A_RECEP --> UC_CHECKIN
+    A_RECEP --> UC_FAQ
+    
+    A_DOC --> UC_LOGIN
+    A_DOC --> UC_EXAM
+    A_DOC --> UC_PRESCRIBE
+    
+    A_ACC --> UC_LOGIN
+    A_ACC --> UC_BILL
+    A_ACC --> UC_VIETQR
+    
+    A_PAT -.-> UC_APPT
+    A_PAT -.-> UC_FAQ
+
+    %% <<include>>
+    UC_APPT -.->|"<<include>>"| UC_CONFLICT
+    UC_APPT -.->|"<<include>>"| UC_LOGIN
+    UC_CHECKIN -.->|"<<include>>"| UC_PAT
+    UC_EXAM -.->|"<<include>>"| UC_LOGIN
+    UC_PRESCRIBE -.->|"<<include>>"| UC_EXAM
+    UC_BILL -.->|"<<include>>"| UC_BHYT
+    UC_BILL -.->|"<<include>>"| UC_LOGIN
+    UC_FAQ -.->|"<<include>>"| UC_PII
+    UC_PRE_VISIT -.->|"<<include>>"| UC_PII
+    UC_DISCHARGE -.->|"<<include>>"| UC_PII
+    UC_PII -.->|"<<include>>"| UC_GUARD
+    UC_GUARD -.-> A_AI
+
+    %% <<extend>>
+    UC_ALLERGY -.->|"<<extend>>"| UC_PRESCRIBE
+    UC_PRE_VISIT -.->|"<<extend>>"| UC_EXAM
+    UC_DISCHARGE -.->|"<<extend>>"| UC_EXAM
+    UC_ORDER_TEST -.->|"<<extend>>"| UC_EXAM
+    UC_VIETQR -.->|"<<extend>>"| UC_BILL
+    UC_PRINT -.->|"<<extend>>"| UC_BILL
+
+    classDef coreUC fill:#f1f5f9,stroke:#64748b,stroke-width:1px,color:#0f172a;
+    classDef recepUC fill:#ecfdf5,stroke:#10b981,stroke-width:1.5px,color:#065f46;
+    classDef docUC fill:#eff6ff,stroke:#3b82f6,stroke-width:1.5px,color:#1e40af;
+    classDef accUC fill:#fffbeb,stroke:#f59e0b,stroke-width:1.5px,color:#92400e;
+    classDef aiUC fill:#fdf2f8,stroke:#ec4899,stroke-width:1.5px,color:#831843;
+```
+
+---
+
+### 4.2. Sơ đồ Hoạt động Liên phòng ban (Activity Diagram with Swimlanes)
+
+```mermaid
+flowchart TD
+    subgraph LANE_PATIENT ["🧑 BỆNH NHÂN"]
+        START((● Bắt đầu))
+        PAT_ARRIVE["1. Đến khám / Đăng ký trực tuyến"]
+        PAT_WAIT["2. Chờ số tại sảnh"]
+        PAT_ROOM["3. Vào phòng khám"]
+        PAT_PAY["4. Quét VietQR / Trả tiền mặt"]
+        PAT_DONE["5. Lĩnh thuốc & Phiếu dặn dò"]
+        END_NODE(((◉ Kết thúc)))
+    end
+
+    subgraph LANE_RECEP ["👩‍💼 LỄ TÂN"]
+        REC_SEARCH{"Bệnh nhân mới hay cũ?"}
+        REC_NEW["Đăng ký hồ sơ & Cấp mã BN"]
+        REC_OLD["Tra cứu hồ sơ CCCD/SĐT"]
+        REC_CHECK{"Kiểm tra trùng lịch?"}
+        REC_RETRY["Chọn khung giờ khác"]
+        REC_QUEUE["Cấp số hàng đợi & Tiếp đón"]
+    end
+
+    subgraph LANE_DOC ["👨‍⚕️ BÁC SĨ"]
+        DOC_CALL["Gọi bệnh nhân"]
+        DOC_EXAM["Khám, đo sinh hiệu & Tính BMI"]
+        DOC_DIAG["Chẩn đoán ICD-10 & Kê đơn"]
+        DOC_ALLERGY{"Cảnh báo dị ứng?"}
+        DOC_CHANGE["Đổi thuốc an toàn"]
+        DOC_FINISH["Hoàn tất ca khám"]
+    end
+
+    subgraph LANE_AI ["🤖 AI ENGINE"]
+        AI_ANON["Khử định danh PII 2 chiều"]
+        AI_PRE["Sinh AI Pre-visit Briefing"]
+        AI_DISCHARGE["Sinh AI Hướng dẫn sau khám"]
+    end
+
+    subgraph LANE_ACC ["💰 KẾ TOÁN / THU NGÂN"]
+        ACC_RECV["Nhận ca khám hoàn tất"]
+        ACC_CALC["Khấu trừ BHYT 80-100%"]
+        ACC_QR["Sinh mã VietQR động"]
+        ACC_PAID["Xác nhận PAID & In hóa đơn"]
+    end
+
+    START --> PAT_ARRIVE
+    PAT_ARRIVE --> REC_SEARCH
+    REC_SEARCH -->|Mới| REC_NEW
+    REC_SEARCH -->|Cũ| REC_OLD
+    REC_NEW --> REC_CHECK
+    REC_OLD --> REC_CHECK
+    REC_CHECK -->|Trùng| REC_RETRY
+    REC_RETRY --> REC_CHECK
+    REC_CHECK -->|Hợp lệ| REC_QUEUE
+    REC_QUEUE --> PAT_WAIT
+    PAT_WAIT --> DOC_CALL
+    DOC_CALL --> PAT_ROOM
+
+    PAT_ROOM --> AI_ANON
+    AI_ANON --> AI_PRE
+    AI_PRE --> DOC_EXAM
+    DOC_EXAM --> DOC_DIAG
+    DOC_DIAG --> DOC_ALLERGY
+    DOC_ALLERGY -->|Có dị ứng| DOC_CHANGE
+    DOC_CHANGE --> DOC_DIAG
+    DOC_ALLERGY -->|An toàn| AI_DISCHARGE
+    AI_DISCHARGE --> DOC_FINISH
+
+    DOC_FINISH --> ACC_RECV
+    ACC_RECV --> ACC_CALC
+    ACC_CALC --> ACC_QR
+    ACC_QR --> PAT_PAY
+    PAT_PAY --> ACC_PAID
+    ACC_PAID --> PAT_DONE
+    PAT_DONE --> END_NODE
+```
+
