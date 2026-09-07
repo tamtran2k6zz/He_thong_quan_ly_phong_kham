@@ -242,7 +242,7 @@ pytest backend/tests/ -v
 
 - Dự án được phát hành mã nguồn mở dưới giấy phép **[MIT License](LICENSE)**.
 - Sản phẩm được nghiên cứu và phát triển phục vụ Đồ án Học phần: **Ứng dụng Trí tuệ Nhân tạo - ICTU 2026-2027**.
-- Tác giả: **Trần Đặng Công Tâm và Đinh Gia Bảo** ([@tamtran2k6zz](https://github.com/tamtran2k6zz)).
+- Tác giả: **Trần Đặng Công Tâm và Đinh Gia Bảo** ([@dtc245220019-create](https://github.com/dtc245220019-create)[@tamtran2k6zz](https://github.com/tamtran2k6zz)).
 
 ---
 
