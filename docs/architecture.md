@@ -561,8 +561,8 @@ graph TD
     %% ==========================================
     subgraph NODE_CLIENT ["«device» MÁY TRẠM NGƯỜI DÙNG (CLIENT WORKSTATION)"]
         subgraph ENV_BROWSER ["«execution environment» Trình duyệt Web (Edge / Chrome / Safari)"]
-            ARTIFACT_UI["«artifact»\nReact 18 SPA Bundle\n(HTML5, Tailwind CSS, JS Assets)"]
-            INTERCEPTOR["«component»\nAxios HTTP Interceptor\n(JWT Bearer Storage)"]
+            ARTIFACT_UI["«artifact» React 18 SPA Bundle (HTML5, Tailwind, JS)"]
+            INTERCEPTOR["«component» Axios HTTP Interceptor (JWT Bearer)"]
         end
     end
 
@@ -571,26 +571,26 @@ graph TD
     %% ==========================================
     subgraph NODE_HOST ["«device» MÁY CHỦ TRIỂN KHAI DOCKER (DOCKER HOST SERVER)"]
         
-        subgraph CONT_FRONTEND ["«execution environment» Container: clinic_frontend\n[Image: nginx:alpine - Port 3000/3001]"]
-            ARTIFACT_NGINX["«artifact»\nNginx Reverse Proxy & Static Host\n(/usr/share/nginx/html)"]
+        subgraph CONT_FRONTEND ["«execution environment» Container clinic_frontend (Port 3000/3001)"]
+            ARTIFACT_NGINX["«artifact» Nginx Reverse Proxy & Static Host"]
         end
 
-        subgraph CONT_BACKEND ["«execution environment» Container: clinic_backend\n[Image: python:3.11-slim - Port 8000]"]
+        subgraph CONT_BACKEND ["«execution environment» Container clinic_backend (Port 8000)"]
             subgraph ASGI_SERVER ["«execution environment» Uvicorn ASGI Server"]
-                ARTIFACT_FASTAPI["«artifact»\nFastAPI Application Package\n(API Routers, Pydantic Validation)"]
-                ARTIFACT_CORE["«artifact»\nCore Engines\n(RBAC, ConflictChecker, PII Sanitizer)"]
-                ARTIFACT_ORM["«artifact»\nSQLAlchemy 2.0 ORM Engine"]
+                ARTIFACT_FASTAPI["«artifact» FastAPI Application Package"]
+                ARTIFACT_CORE["«artifact» Core Engines (RBAC, Conflict, PII)"]
+                ARTIFACT_ORM["«artifact» SQLAlchemy 2.0 ORM Engine"]
             end
         end
 
-        subgraph CONT_DATABASE ["«execution environment» Container: clinic_mysql\n[Image: mysql:8.0 - Port 3306 -> Host 3307]"]
+        subgraph CONT_DATABASE ["«execution environment» Container clinic_mysql (Port 3306/3307)"]
             DB_ENGINE["«database system» MySQL 8.0 Community Server"]
-            subgraph VOL_MYSQL ["«storage volume» mysql_data (Local Persistent SSD)"]
-                DB_DATA["«database»\nclinic_db\n(14 Relational 3NF Tables, Indexes, Binlog)"]
+            subgraph VOL_MYSQL ["«storage volume» mysql_data (Persistent SSD)"]
+                DB_DATA["«database» clinic_db (14 Relational 3NF Tables)"]
             end
         end
 
-        subgraph CONT_PGADMIN ["«execution environment» Container: clinic_pgadmin\n[Port 5050]"]
+        subgraph CONT_PGADMIN ["«execution environment» Container clinic_pgadmin (Port 5050)"]
             ARTIFACT_GUI["«artifact» Database Web Management Console"]
         end
     end
@@ -600,25 +600,25 @@ graph TD
     %% ==========================================
     subgraph NODE_CLOUD ["«cloud service» GOOGLE CLOUD PLATFORM (GCP)"]
         subgraph ENV_GEMINI ["«execution environment» Google Generative AI Cloud Cluster"]
-            API_GEMINI["«cloud API»\nGemini 3.6 Flash Engine\n(Generative Content REST Endpoint)"]
+            API_GEMINI["«cloud API» Gemini 3.6 Flash Engine (REST Endpoint)"]
         end
     end
 
     %% ==========================================
     %% MẠNG & GIAO THỨC TRUYỀN THÔNG (PROTOCOLS)
     %% ==========================================
-    ARTIFACT_UI -->|HTTPS / Cổng 3000 / Static Content| ARTIFACT_NGINX
-    INTERCEPTOR -->|HTTP REST / JSON / JWT Header / Cổng 8000| ARTIFACT_FASTAPI
+    ARTIFACT_UI -->|"HTTPS / Port 3000 / Static Content"| ARTIFACT_NGINX
+    INTERCEPTOR -->|"HTTP REST / JSON / JWT Header / Port 8000"| ARTIFACT_FASTAPI
 
     ARTIFACT_FASTAPI --> ARTIFACT_CORE
     ARTIFACT_CORE --> ARTIFACT_ORM
     
-    ARTIFACT_ORM -->|TCP/IP / PyMySQL Driver / Cổng 3306| DB_ENGINE
+    ARTIFACT_ORM -->|"TCP/IP / Port 3306"| DB_ENGINE
     DB_ENGINE --> DB_DATA
 
-    ARTIFACT_GUI -->|TCP/IP / Port 3306| DB_ENGINE
+    ARTIFACT_GUI -->|"TCP/IP / Port 3306"| DB_ENGINE
 
-    ARTIFACT_CORE -->|HTTPS / TLS 1.3 / Port 443 / JSON Payload\n[Dữ liệu đã Khử PII 100%]| API_GEMINI
+    ARTIFACT_CORE -->|"HTTPS / TLS 1.3 / Port 443 (Khử PII 100%)"| API_GEMINI
 
     %% Styling
     classDef deviceNode fill:#f8fafc,stroke:#334155,stroke-width:2px,color:#0f172a;

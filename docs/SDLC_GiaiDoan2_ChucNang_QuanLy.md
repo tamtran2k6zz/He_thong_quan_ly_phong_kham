@@ -477,12 +477,12 @@ graph TD
         ART_GEMINI["«cloud API» Gemini 3.6 Flash Engine (Port 443)"]
     end
 
-    ART_SPA -->|HTTPS / Port 3000| ART_NGINX
-    ART_AXIOS -->|HTTP REST / JSON / JWT / Port 8000| ART_FASTAPI
+    ART_SPA -->|"HTTPS / Port 3000"| ART_NGINX
+    ART_AXIOS -->|"HTTP REST / JSON / JWT / Port 8000"| ART_FASTAPI
     ART_FASTAPI --> ART_CORE
     ART_CORE --> ART_ORM
-    ART_ORM -->|TCP/IP / Port 3306| ART_MYSQL
+    ART_ORM -->|"TCP/IP / Port 3306"| ART_MYSQL
     ART_MYSQL --> ART_SCHEMA
-    ART_CORE -->|HTTPS / TLS 1.3 / Port 443 (Khử PII 100%)| ART_GEMINI
+    ART_CORE -->|"HTTPS / TLS 1.3 / Port 443 (Khử PII 100%)"| ART_GEMINI
 ```
 
