@@ -191,9 +191,9 @@ const UserManagementPage = () => {
                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                           u.is_active
                             ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-rose-100 text-rose-800'
+                            : 'bg-amber-100 text-amber-900'
                         }`}>
-                          {u.is_active ? 'Hoạt động' : 'Đã khóa'}
+                          {u.is_active ? 'Hoạt động' : 'Chưa hoạt động'}
                         </span>
                       </td>
 

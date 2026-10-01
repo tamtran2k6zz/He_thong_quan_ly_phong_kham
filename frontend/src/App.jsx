@@ -8,6 +8,8 @@ import Layout from './components/Layout';
 
 // Auth Pages
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import BookAppointmentPage from './pages/BookAppointmentPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 
 // Receptionist Pages
@@ -93,6 +95,8 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/book-appointment" element={<BookAppointmentPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="/" element={<RootRedirector />} />
 

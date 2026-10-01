@@ -178,6 +178,16 @@ const AppointmentCalendarPage = () => {
     }
   };
 
+  const handleConfirm = async (appointmentId, code) => {
+    try {
+      await appointmentService.updateAppointment(appointmentId, { status: 'CONFIRMED' });
+      toastSuccess(`Đã xác nhận lịch hẹn ${code}`);
+      loadAppointments();
+    } catch (err) {
+      toastError(err.response?.data?.detail || 'Xác nhận lịch hẹn thất bại');
+    }
+  };
+
   const handleCancel = async (appointmentId, code) => {
     if (!window.confirm(`Xác nhận hủy lịch hẹn ${code}?`)) return;
     try {
@@ -355,6 +365,14 @@ const AppointmentCalendarPage = () => {
                     </div>
 
                     <div className="flex items-center gap-2 self-end sm:self-center">
+                      {appt.status === 'PENDING' && (
+                        <button
+                          onClick={() => handleConfirm(appt.id, appt.appointment_code)}
+                          className="flex items-center gap-1 rounded-lg border border-sky-300 bg-sky-50 px-3 py-1.5 text-[11px] font-bold text-sky-800 hover:bg-sky-100"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Xác nhận
+                        </button>
+                      )}
                       {(appt.status === 'CONFIRMED' || appt.status === 'PENDING') && (
                         <button
                           onClick={() => handleCheckIn(appt.id, appt.appointment_code)}

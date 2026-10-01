@@ -1,16 +1,44 @@
-from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from backend.app.database import get_db
 from backend.app.models.user import User
 from backend.app.models.audit import AuditLog
-from backend.app.schemas.auth import Token, LoginRequest, UserInfo
+from backend.app.schemas.auth import Token, LoginRequest, RegisterRequest
 from backend.app.schemas.user import UserResponse
-from backend.app.core.security import verify_password, create_access_token
+from backend.app.core.security import verify_password, create_access_token, get_password_hash
 from backend.app.core.rbac import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+def register(register_data: RegisterRequest, db: Session = Depends(get_db)):
+    """Receive a staff account request for administrator approval."""
+    username = register_data.username.lower()
+    email = register_data.email.lower()
+    if db.query(User).filter(User.username == username).first():
+        raise HTTPException(status_code=409, detail="Tên đăng nhập đã được sử dụng")
+    if db.query(User).filter(User.email == email).first():
+        raise HTTPException(status_code=409, detail="Email đã được sử dụng")
+
+    user = User(
+        username=username,
+        email=email,
+        full_name=register_data.full_name,
+        hashed_password=get_password_hash(register_data.password),
+        role=register_data.role,
+        is_active=False,
+    )
+    db.add(user)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Tên đăng nhập hoặc email đã được sử dụng")
+    db.refresh(user)
+    return user
 
 
 @router.post("/login", response_model=Token)

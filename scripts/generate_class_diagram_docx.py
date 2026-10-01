@@ -168,7 +168,7 @@ def build_docx():
         footer = s.footer
         p_ft = footer.paragraphs[0]
         p_ft.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-        r_ft = p_ft.add_run("TÀI LIỆU THIẾT KẾ HƯỚNG ĐỐI TƯỢNG — NHÓM 07 — ĐINH GIA BẢO & TRẦN ĐẶNG CÔNG TÂM")
+        r_ft = p_ft.add_run("TÀI LIỆU THIẾT KẾ HƯỚNG ĐỐI TƯỢNG, NHÓM 03 (LỚP ATTT K23A), ĐINH GIA BẢO VÀ TRẦN ĐẶNG CÔNG TÂM")
         r_ft.font.name = "Times New Roman"
         r_ft.font.size = Pt(8.5)
         r_ft.font.color.rgb = RGBColor(148, 163, 184)
@@ -178,7 +178,7 @@ def build_docx():
     # =========================================================================
     p_inst = doc.add_paragraph()
     p_inst.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r_inst = p_inst.add_run("BỘ GIÁO DỤC VÀ ĐÀO TẠO — TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN VÀ TRUYỀN THÔNG\nKHOA CÔNG NGHỆ THÔNG TIN")
+    r_inst = p_inst.add_run("BỘ GIÁO DỤC VÀ ĐÀO TẠO, TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN VÀ TRUYỀN THÔNG\nKHOA CÔNG NGHỆ THÔNG TIN")
     r_inst.font.name = "Times New Roman"
     r_inst.font.size = Pt(11)
     r_inst.font.bold = True
@@ -208,8 +208,8 @@ def build_docx():
     info_table.columns[1].width = Inches(4.3)
     
     rows_data = [
-        ("Nhóm thực hiện:", "Nhóm 07"),
-        ("Thành viên nhóm:", "1. Đinh Gia Bảo (Trưởng nhóm — Kiến trúc & AI Lead)\n2. Trần Đặng Công Tâm (Thành viên — Fullstack Dev & QA Lead)"),
+        ("Nhóm thực hiện:", "Nhóm 03 (Lớp An toàn thông tin K23A, ICTU)"),
+        ("Thành viên nhóm:", "1. Đinh Gia Bảo (Trưởng nhóm, Kiến trúc & AI Lead)\n2. Trần Đặng Công Tâm (Thành viên, Fullstack Dev & QA Lead)"),
         ("Tên ứng dụng:", "Hệ thống quản lý phòng khám có tích hợp AI (CMS-AI)"),
         ("Thời gian thực hiện:", "Từ 27/07/2026 đến 27/09/2026 (9 tuần)")
     ]
@@ -1163,25 +1163,29 @@ def build_docx():
     
     p_l = c_left.paragraphs[0]
     p_l.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_l.add_run("THÀNH VIÊN NHÓM 07\n(Ký và ghi rõ họ tên)\n\n\n\n").font.bold = True
+    p_l.add_run("THÀNH VIÊN NHÓM 03\n(Ký và ghi rõ họ tên)\n\n\n\n").font.bold = True
     p_l.add_run("Trần Đặng Công Tâm\n(Fullstack Dev & QA Lead)").font.italic = True
     
     p_r = c_right.paragraphs[0]
     p_r.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_r.add_run("TRƯỞNG NHÓM 07\n(Ký và ghi rõ họ tên)\n\n\n\n").font.bold = True
+    p_r.add_run("TRƯỞNG NHÓM 03\n(Ký và ghi rõ họ tên)\n\n\n\n").font.bold = True
     p_r.add_run("Đinh Gia Bảo\n(Architecture & AI Lead)").font.italic = True
 
-    # Lưu tài liệu vào các thư mục docs/ và docs/Reports/
+    # Lưu tài liệu vào các thư mục docs/, Desktop và 7_Giai_Doan_Hoan_Thien
     out_paths = [
+        r"C:\Users\MSI\OneDrive\Desktop\CacGiaiDoanThucHien\04_GenAI_SoftwareDevelopment_object-oriented-design.docx",
+        r"d:\ICTU\Nam 3\ICTU_2026-2027\Ứng dụng trí tuệ nhân tạo - Project\He_thong_quan_ly_phong_kham\docs\7_Giai_Doan_Hoan_Thien\04_GenAI_SoftwareDevelopment_object-oriented-design.docx",
         r"d:\ICTU\Nam 3\ICTU_2026-2027\Ứng dụng trí tuệ nhân tạo - Project\He_thong_quan_ly_phong_kham\docs\Tai_Lieu_Thiet_Ke_Huong_Doi_Tuong_Nhom_07.docx",
-        r"d:\ICTU\Nam 3\ICTU_2026-2027\Ứng dụng trí tuệ nhân tạo - Project\He_thong_quan_ly_phong_kham\docs\Reports\Tai_Lieu_Thiet_Ke_Huong_Doi_Tuong_Nhom_07.docx",
-        r"d:\ICTU\Nam 3\ICTU_2026-2027\Ứng dụng trí tuệ nhân tạo - Project\He_thong_quan_ly_phong_kham\Tai_Lieu_Thiet_Ke_Huong_Doi_Tuong_Nhom_07.docx"
+        r"d:\ICTU\Nam 3\ICTU_2026-2027\Ứng dụng trí tuệ nhân tạo - Project\He_thong_quan_ly_phong_kham\docs\Reports\Tai_Lieu_Thiet_Ke_Huong_Doi_Tuong_Nhom_07.docx"
     ]
     
     for p in out_paths:
         os.makedirs(os.path.dirname(p), exist_ok=True)
-        doc.save(p)
-    print("Successfully generated all docx files!")
+        try:
+            doc.save(p)
+            print(f"-> Đã lưu thành công: {os.path.basename(p)}")
+        except PermissionError:
+            print(f"! Cảnh báo: Tệp {os.path.basename(p)} đang mở trong Word, bỏ qua việc ghi đè lần này.")
 
 if __name__ == "__main__":
     build_docx()

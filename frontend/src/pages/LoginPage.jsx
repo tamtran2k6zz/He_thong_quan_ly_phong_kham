@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, DEMO_ACCOUNTS } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import {
@@ -191,6 +191,15 @@ const LoginPage = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
+
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold">
+            <Link to="/register" className="text-sky-700 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-600">
+              Đăng ký tài khoản nhân viên
+            </Link>
+            <Link to="/book-appointment" className="text-sky-700 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-600">
+              Đăng ký khám bệnh
+            </Link>
+          </div>
 
           {/* 1-Click Quick Login Demo Buttons */}
           <div className="mt-7 pt-5 border-t border-slate-100">
