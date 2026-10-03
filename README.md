@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/TailwindCSS-3.4+-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind" />
   <img src="https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
   <img src="https://img.shields.io/badge/Google_Gemini-Live_3.6-8E75B2?style=for-the-badge&logo=google&logoColor=white" alt="Gemini" />
-  <img src="https://img.shields.io/badge/Tests-319_Passed_100%25-22C55E?style=for-the-badge&logo=pytest&logoColor=white" alt="Pytest" />
+  <img src="https://img.shields.io/badge/Tests-323_Passed_100%25-22C55E?style=for-the-badge&logo=pytest&logoColor=white" alt="Pytest" />
   <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
 </p>
 
@@ -29,9 +29,9 @@ Chào mừng bạn đến với **Hệ thống Quản lý Phòng khám Đa khoa 
 Trong bối cảnh các phòng khám tư nhân thường gặp khó khăn vì quy trình tiếp đón rời rạc, dễ xảy ra tình trạng trùng lịch bác sĩ, mất thời gian tra cứu bệnh sử cũ và quá tải thủ tục hành chính, dự án này ra đời như một **giải pháp số hóa toàn diện, chuẩn y tế và an toàn tuyệt đối**.
 
 Hệ thống kết hợp hài hòa giữa:
-1. **Nghiệp vụ phòng khám chuẩn mực**: Quản lý bệnh nhân, điều phối lịch hẹn thông minh (thuật toán kiểm tra giao thoa thời gian thực chống trùng lịch 100%), bàn khám điện tử EMR, kê đơn thuốc và thanh toán viện phí tích hợp BHYT / VietQR động Napas247.
+1. **Nghiệp vụ phòng khám chuẩn mực**: Quản lý bệnh nhân, cổng đăng ký khám bệnh trực tuyến cho người dân, điều phối lịch hẹn thông minh (thuật toán kiểm tra giao thoa thời gian thực chống trùng lịch 100%), bàn khám điện tử EMR, kê đơn thuốc và thanh toán viện phí tích hợp BHYT / VietQR động Napas247.
 2. **Trợ lý AI Hành chính 3 lớp bảo vệ**: Ứng dụng mô hình ngôn ngữ lớn thời gian thực (**Google Gemini 3.6 Flash / OpenAI / Ollama**) để giải đáp quy trình, tóm tắt hồ sơ bệnh án 10 giây và sinh dặn dò sau khám — **tuyệt đối không tự ý chẩn đoán bệnh học hay thay thế bác sĩ**.
-3. **Mô hình thực hành AI-Augmented SDLC**: Toàn bộ quá trình phát triển được điều phối qua **15 bộ Kỹ năng (Skills)**, **Tools**, **MCP**, hệ thống **16 Master Prompts** cho AI Agent (`prompt_agents/`) và các cổng kiểm soát chất lượng của con người (**Human Gates 1, 2, 3**).
+3. **Mô hình thực hành AI-Augmented SDLC**: Toàn bộ quá trình phát triển được điều phối qua **15 bộ Kỹ năng (Skills)**, **Tools**, **MCP**, hệ thống **16 Master Prompts** cho AI Agent (`prompt_agents/`), bộ **7 Báo cáo Hoàn thiện (.docx)** (`docs/7_Giai_Doan_Hoan_Thien/`) và các cổng kiểm soát chất lượng của con người (**Human Gates 1, 2, 3**).
 
 ---
 
@@ -66,7 +66,7 @@ Hệ thống kết hợp hài hòa giữa:
 ### 1. 🗓️ Đặt Lịch Hẹn & Thuật Toán Chống Trùng Lịch Tuyệt Đối
 - Giao diện lịch biểu trực quan theo ngày/tuần (Calendar View).
 - Tự động phát hiện và chặn đứng xung đột thời gian của bác sĩ và phòng khám trước khi lưu vào cơ sở dữ liệu theo công thức toán học: `(Start_A < End_B) and (End_A > Start_B)`.
-- Hỗ trợ bệnh nhân đăng ký tài khoản trực tuyến và đặt lịch hẹn khám từ xa.
+- **Cổng Bệnh nhân (Public Patient Portal)**: Người bệnh có thể tự đăng ký tài khoản tại `/register`, tra cứu danh sách bác sĩ chuyên khoa và chọn khung giờ rảnh thực tế để đặt lịch tại `/book-appointment`.
 
 ### 2. 🩺 Bàn Khám Bệnh EMR Lâm Sàng Dành Cho Bác Sĩ
 - **Hàng đợi bệnh nhân trực quan**: Theo dõi thời gian thực ai đang chờ, ai đang khám.
@@ -140,7 +140,7 @@ double-click: run_all.bat
 # Hoặc khởi chạy từng phần riêng biệt:
 run_backend.bat     # Khởi chạy FastAPI Backend tại http://localhost:8000
 run_frontend.bat    # Khởi chạy React Vite Frontend tại http://localhost:3001 hoặc http://localhost:5173
-run_tests.bat       # Chạy toàn bộ 319+ bài kiểm thử tự động
+run_tests.bat       # Chạy toàn bộ 323+ bài kiểm thử tự động
 ```
 
 ---
@@ -156,8 +156,7 @@ Hệ thống đã nạp sẵn bộ dữ liệu mẫu y tế đầy đủ. Bạn 
 | 👨‍⚕️ **Bác Sĩ (Doctor)** | `dr_nam` | `doc123` | BS.CKII Nguyễn Văn Nam | Xem tóm tắt bệnh sử AI 10 giây, khám lâm sàng, chọn ICD-10, kê đơn thuốc cảnh báo dị ứng và sinh dặn dò AI. |
 | 👨‍⚕️ **Bác Sĩ Nhi Khoa** | `dr_huong` | `doc123` | ThS.BS Lê Thu Hương | Khám chuyên khoa nhi, kê đơn thuốc và theo dõi bệnh nhi. |
 | 💰 **Kế Toán / Thu Ngân** | `accountant` | `acc123` | Trần Bích Phương | Quản lý danh sách viện phí, khấu trừ BHYT, tạo mã VietQR thanh toán tự động, xuất & in phiếu thu. |
-
-> 💡 **Khách hàng / Bệnh nhân mới:** Có thể trực tiếp bấm nút **"Đăng ký tài khoản"** trên màn hình đăng nhập để tạo hồ sơ khám bệnh cá nhân và đặt lịch hẹn khám trực tuyến.
+| 🧑‍🤝‍🧑 **Bệnh Nhân (Public Portal)** | *Tự đăng ký* | *Mật khẩu tự tạo* | Người bệnh trực tuyến | Tự đăng ký hồ sơ tại `/register`, tra cứu ca trực và đặt lịch hẹn khám tại `/book-appointment`. |
 
 ---
 
@@ -173,7 +172,7 @@ Hệ thống đã nạp sẵn bộ dữ liệu mẫu y tế đầy đủ. Bạn 
 (Admin xem thống kê)    (Kế toán quét QR)     (Sinh phiếu dặn dò)    (Chẩn đoán ICD-10)
 ```
 
-1. **Bước 1 (Lễ tân):** Đăng nhập tài khoản `receptionist` / `rec123`, tiếp đón bệnh nhân mới hoặc tìm kiếm hồ sơ bệnh nhân cũ theo SĐT / CCCD.
+1. **Bước 1 (Lễ tân / Bệnh nhân):** Lễ tân đăng nhập tài khoản `receptionist` / `rec123` tiếp đón bệnh nhân mới; hoặc người bệnh tự vào link `/register` để đăng ký hồ sơ trực tuyến.
 2. **Bước 2 (Lễ tân):** Đặt lịch khám tại chuyên khoa Tim mạch cho BS. Nguyễn Văn Nam (thử chọn giờ trùng ca khác để thấy hệ thống lập tức cảnh báo đỏ 409 Conflict).
 3. **Bước 3 (Lễ tân):** Bấm nút Check-in để chuyển trạng thái bệnh nhân sang hàng đợi khám bệnh của bác sĩ.
 4. **Bước 4 (Bác sĩ):** Đăng nhập tài khoản `dr_nam` / `doc123`, mở bàn khám và đọc thẻ **AI Pre-visit Briefing** để nắm nhanh tiền sử dị ứng thuốc và bệnh lý nền chỉ trong 10 giây.
@@ -195,7 +194,7 @@ Dự án được xây dựng và quản trị theo triết lý **AI-Augmented S
 ├── 🗄️ database-design/SKILL.md         # Thiết kế CSDL 14 bảng quan hệ 3NF & Composite Indexes
 ├── 📊 diagram-design/SKILL.md          # Thiết kế biểu đồ UML (Use Case, Class, Sequence, Activity, State)
 ├── 💻 implementation/SKILL.md          # Quy chuẩn Clean Code, PEP 8, Pydantic v2 & RFC 7807
-├── 🧪 testing/SKILL.md                 # Chiến lược kiểm thử đa tầng (319+ test cases pass 100%)
+├── 🧪 testing/SKILL.md                 # Chiến lược kiểm thử đa tầng (323+ test cases pass 100%)
 ├── 🔍 code-review/SKILL.md             # Kiểm toán chất lượng mã nguồn & phân quyền RBAC
 ├── 🛡️ security-review/SKILL.md         # Kiểm toán an ninh dữ liệu y tế OWASP & Nghị định 13
 ├── 📝 documentation/SKILL.md           # Quy chuẩn biên soạn tài liệu SDLC 4 giai đoạn
@@ -226,11 +225,32 @@ Dự án được xây dựng và quản trị theo triết lý **AI-Augmented S
 | [`08_prompt_clinic_faq_rag.md`](prompt_agents/08_prompt_clinic_faq_rag.md) | Xây dựng FAQ Chatbot RAG, bộ lọc Guardrails chặn câu hỏi chẩn đoán | KT3 / Human Gate 1 & 3 |
 | [`09_prompt_discharge_instructions.md`](prompt_agents/09_prompt_discharge_instructions.md) | Phát triển tính năng sinh dặn dò xuất viện, bảng lịch uống thuốc 4 bữa | KT3 / Human Gate 3 |
 | [`10_prompt_design_taste_frontend.md`](prompt_agents/10_prompt_design_taste_frontend.md) | Thiết kế Design Tokens lâm sàng, Typography Tabular figures, Anti-AI-slop | KT2 / Human Gate 2 |
-| [`11_prompt_testing_automation.md`](prompt_agents/11_prompt_testing_automation.md) | Thiết kế Test Plan, Test Report và bộ 319+ test cases Pytest pass 100% | KT4 / Human Gate 2 |
+| [`11_prompt_testing_automation.md`](prompt_agents/11_prompt_testing_automation.md) | Thiết kế Test Plan, Test Report và bộ 323+ test cases Pytest pass 100% | KT4 / Human Gate 2 |
 | [`12_prompt_code_review.md`](prompt_agents/12_prompt_code_review.md) | Kiểm toán mã nguồn đa chiều, phân loại rủi ro CRITICAL/HIGH/MEDIUM/LOW | KT2 & KT4 |
 | [`13_prompt_security_review.md`](prompt_agents/13_prompt_security_review.md) | Kiểm toán an ninh thông tin OWASP Top 10 và thử nghiệm AI Red Teaming | KT4 / Human Gate 2 & 3 |
 | [`14_prompt_documentation_sdlc_reports.md`](prompt_agents/14_prompt_documentation_sdlc_reports.md) | Biên soạn bộ tài liệu minh chứng 4 giai đoạn SDLC và báo cáo tổng kết AI | KT4 / Human Gate 1..3 |
 | [`15_prompt_professional_writing.md`](prompt_agents/15_prompt_professional_writing.md) | Quy chuẩn viết tài liệu kỹ thuật chuyên nghiệp, loại bỏ từ ngữ sáo rỗng | Xuyên suốt |
+
+---
+
+## 📚 Bộ 7 Tài Liệu Hoàn Thiện GenAI SDLC (`docs/7_Giai_Doan_Hoan_Thien/`)
+
+Hệ thống được đóng gói với trọn bộ **7 tài liệu Word (.docx) chuyên nghiệp** được sinh tự động bằng AI scripts trong [`scripts/`](scripts/):
+
+| STT | Tài Liệu Hoàn Thiện | Dung Lượng | Nội Dung Trọng Tâm |
+| :---: | :--- | :---: | :--- |
+| **01** | `01_GenAI_SoftwareDevelopment_project-plan.docx` | 35 KB | Kế hoạch dự án, phân rã công việc WBS, tiến độ 9 tuần và ma trận phân công Nhóm 07. |
+| **02** | `02_GenAI_SoftwareDevelopment_requirements-qa.docx` | 1.05 MB | Bảng câu hỏi phỏng vấn nghiệp vụ phòng khám, biên bản Q&A và khảo sát người dùng. |
+| **03** | `03_GenAI_SoftwareDevelopment_requirements-specification.docx` | 426 KB | Đặc tả yêu cầu kỹ thuật phần mềm (SRS) chi tiết 38 FR, 10 NFR và ranh giới đạo đức AI. |
+| **04** | `04_GenAI_SoftwareDevelopment_object-oriented-design.docx` | 353 KB | Thiết kế hướng đối tượng OOD, mô hình lớp 10 class chi tiết, các mối quan hệ và biểu đồ UML. |
+| **05** | `05_GenAI_SoftwareDevelopment_functional-testing.docx` | 39 KB | Kế hoạch và báo cáo kiểm thử chức năng tự động: 323 test cases đạt tỷ lệ 100%. |
+| **06** | `06_GenAI_SoftwareDevelopment_screenflow_db.docx` | 594 KB | Luồng màn hình (Screenflow), sơ đồ thực thể ERD 14 bảng quan hệ 3NF và Data Dictionary. |
+| **07** | `07_GenAI_SoftwareDevelopment_user-guide.docx` | 807 KB | Sổ tay vận hành hướng dẫn sử dụng chi tiết có hình ảnh minh họa cho cả 4 vai trò. |
+
+> 🛠️ **Sinh lại toàn bộ 7 file Word chỉ với 1 lệnh:**
+> ```bash
+> python scripts/generate_all_7_sdlc_docs.py
+> ```
 
 ---
 
@@ -250,7 +270,7 @@ Toàn bộ các tài liệu phân tích, đặc tả, thiết kế, báo cáo ki
 | 8 | [`docs/database-design.md`](docs/database-design.md) | Thiết kế 14 bảng quan hệ 3NF, sơ đồ Mermaid ERD và từ điển dữ liệu Data Dictionary. |
 | 9 | [`docs/thiet-ke-huong-doi-tuong-class-diagram.md`](docs/thiet-ke-huong-doi-tuong-class-diagram.md) | Đặc tả thiết kế hướng đối tượng (OOD) chi tiết 10 lớp nghiệp vụ cốt lõi. |
 | 10 | [`docs/test-plan.md`](docs/test-plan.md) | Kế hoạch kiểm thử tự động toàn diện từ Unit, Integration đến AI Security. |
-| 11 | [`docs/test-report.md`](docs/test-report.md) | Báo cáo kết quả kiểm thử tự động: **319 / 319 passed (100% Pass Rate)**. |
+| 11 | [`docs/test-report.md`](docs/test-report.md) | Báo cáo kết quả kiểm thử tự động: **323 / 323 passed (100% Pass Rate)**. |
 | 12 | [`docs/code-review.md`](docs/code-review.md) | Biên bản kiểm toán mã nguồn đa chiều, đánh giá RBAC và xử lý lỗi RFC 7807. |
 | 13 | [`docs/security-review.md`](docs/security-review.md) | Báo cáo an toàn thông tin theo chuẩn OWASP Top 10 và Nghị định 13/2023/NĐ-CP. |
 | 14 | [`docs/deployment.md`](docs/deployment.md) | Sổ tay hướng dẫn triển khai Docker Compose và thiết lập biến môi trường. |
@@ -258,26 +278,27 @@ Toàn bộ các tài liệu phân tích, đặc tả, thiết kế, báo cáo ki
 | 16 | [`docs/Reports/AI-Augmented-SDLC-Report.md`](docs/Reports/AI-Augmented-SDLC-Report.md) | **Báo cáo tổng kết phương pháp luận AI SDLC**, các điểm kiểm soát Human Gates 1-3, danh mục phát hiện lỗi AI và các hiệu chỉnh thực tế của con người. |
 | 17 | **4 Báo Cáo Học Phần (KT1 - KT4)** | [`SDLC_GiaiDoan1_PhanTich_ThietKe.md`](docs/Reports/SDLC_GiaiDoan1_PhanTich_ThietKe.md), [`SDLC_GiaiDoan2_ChucNang_QuanLy.md`](docs/Reports/SDLC_GiaiDoan2_ChucNang_QuanLy.md), [`SDLC_GiaiDoan3_TichHopAI_TestAI.md`](docs/Reports/SDLC_GiaiDoan3_TichHopAI_TestAI.md), [`SDLC_GiaiDoan4_BaoCao_HuongDan_TrienKhai.md`](docs/Reports/SDLC_GiaiDoan4_BaoCao_HuongDan_TrienKhai.md). |
 | 18 | [`docs/Reports/phan-chia-cong-viec.md`](docs/Reports/phan-chia-cong-viec.md) | Bảng phân công nhiệm vụ và tỷ lệ đóng góp chi tiết giữa 2 thành viên nhóm (50% - 50%). |
-| 19 | **Bộ 7 Tài Liệu Hoàn Thiện (.docx)** | Lưu trữ tại thư mục `docs/7_Giai_Doan_Hoan_Thien/` phục vụ nộp báo cáo hoàn chỉnh. |
+| 19 | [`docs/Reports/Tai_Lieu_Thiet_Ke_Huong_Doi_Tuong_Nhom_07.docx`](docs/Reports/Tai_Lieu_Thiet_Ke_Huong_Doi_Tuong_Nhom_07.docx) | Bản Word thiết kế hướng đối tượng hoàn chỉnh của Nhóm 07. |
 
 ---
 
 ## 🧪 Kết Quả Kiểm Thử Tự Động (Automated Testing)
 
-Hệ thống duy trì tỷ lệ vượt qua **100% (319/319 passed, 4 xfailed)** trên toàn bộ test suite:
+Hệ thống duy trì tỷ lệ vượt qua **100% (323/323 passed, 4 xfailed)** trên toàn bộ test suite:
 
 ```bash
 # Chạy toàn bộ test suite kiểm thử tự động
 pytest backend/tests/ -v
 
-# ============================== 319 passed, 4 xfailed in 14.82s ==============================
+# ============================== 323 passed, 4 xfailed in 25.58s ==============================
 ```
 
-- ✅ **Test RBAC & Phân Quyền**: Chặn đứng 100% hành vi truy cập trái phép qua API giữa các vai trò.
-- ✅ **Test Chống Trùng Lịch**: Kiểm thử toàn diện 15 kịch bản giao thoa khung giờ của bác sĩ và phòng khám.
-- ✅ **Test Khử Định Danh PII**: Xác minh việc che số CCCD, SĐT, BHYT, Tên bệnh nhân chính xác tuyệt đối mà không che nhầm thông số sinh hiệu lâm sàng.
-- ✅ **Test AI Guardrails**: Kiểm thử khả năng chống Prompt Injection, chống Jailbreak và từ chối tự chẩn đoán bệnh học.
-- ✅ **Test E2E Clinical Flow**: Chu trình khép kín Tiếp đón ➔ Khám bệnh ➔ Kê đơn ➔ Xuất hóa đơn ➔ Báo cáo.
+- ✅ **Test RBAC & Phân Quyền (`test_auth.py`)**: Chặn đứng 100% hành vi truy cập trái phép qua API giữa các vai trò.
+- ✅ **Test Cổng Đăng Ký Bệnh Nhân (`test_public_registration.py`)**: Đăng ký bệnh nhân công khai, xác thực dữ liệu và cấp tài khoản tự động.
+- ✅ **Test Chống Trùng Lịch (`test_conflict.py`)**: Kiểm thử toàn diện 15 kịch bản giao thoa khung giờ của bác sĩ và phòng khám.
+- ✅ **Test Khử Định Danh PII (`test_m3_anonymizer.py`)**: Xác minh việc che số CCCD, SĐT, BHYT, Tên bệnh nhân chính xác tuyệt đối mà không che nhầm thông số sinh hiệu lâm sàng.
+- ✅ **Test AI Guardrails & Bảo Mật (`test_m1_adversarial.py`)**: Kiểm thử khả năng chống Prompt Injection, chống Jailbreak và từ chối tự chẩn đoán bệnh học.
+- ✅ **Test E2E Clinical Flow (`test_emr_billing.py` & `test_clinic_ops.py`)**: Chu trình khép kín Tiếp đón ➔ Khám bệnh ➔ Kê đơn ➔ Xuất hóa đơn ➔ Báo cáo.
 
 ---
 
