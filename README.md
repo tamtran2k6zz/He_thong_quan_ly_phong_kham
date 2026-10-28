@@ -14,7 +14,7 @@
 
 ---
 
-## 👥 Nhóm Thực Hiện Đề Tài: Nhóm 07
+## 👥 Nhóm Thực Hiện Đề Tài: Nhóm 03
 * 👨‍💻 **Đinh Gia Bảo** – **Trưởng nhóm** ([@dtc245220019-create](https://github.com/dtc245220019-create))
 * 👨‍💻 **Trần Đặng Công Tâm** – Thành viên ([@tamtran2k6zz](https://github.com/tamtran2k6zz))
 * 🎓 **Học phần:** Ứng dụng Trí tuệ Nhân tạo trong Kỹ thuật Phần mềm (ICTU 2026-2027)
@@ -239,7 +239,7 @@ Hệ thống được đóng gói với trọn bộ **7 tài liệu Word (.docx)
 
 | STT | Tài Liệu Hoàn Thiện | Dung Lượng | Nội Dung Trọng Tâm |
 | :---: | :--- | :---: | :--- |
-| **01** | `01_GenAI_SoftwareDevelopment_project-plan.docx` | 35 KB | Kế hoạch dự án, phân rã công việc WBS, tiến độ 9 tuần và ma trận phân công Nhóm 07. |
+| **01** | `01_GenAI_SoftwareDevelopment_project-plan.docx` | 35 KB | Kế hoạch dự án, phân rã công việc WBS, tiến độ 9 tuần và ma trận phân công Nhóm 03. |
 | **02** | `02_GenAI_SoftwareDevelopment_requirements-qa.docx` | 1.05 MB | Bảng câu hỏi phỏng vấn nghiệp vụ phòng khám, biên bản Q&A và khảo sát người dùng. |
 | **03** | `03_GenAI_SoftwareDevelopment_requirements-specification.docx` | 426 KB | Đặc tả yêu cầu kỹ thuật phần mềm (SRS) chi tiết 38 FR, 10 NFR và ranh giới đạo đức AI. |
 | **04** | `04_GenAI_SoftwareDevelopment_object-oriented-design.docx` | 353 KB | Thiết kế hướng đối tượng OOD, mô hình lớp 10 class chi tiết, các mối quan hệ và biểu đồ UML. |
@@ -278,7 +278,7 @@ Toàn bộ các tài liệu phân tích, đặc tả, thiết kế, báo cáo ki
 | 16 | [`docs/Reports/AI-Augmented-SDLC-Report.md`](docs/Reports/AI-Augmented-SDLC-Report.md) | **Báo cáo tổng kết phương pháp luận AI SDLC**, các điểm kiểm soát Human Gates 1-3, danh mục phát hiện lỗi AI và các hiệu chỉnh thực tế của con người. |
 | 17 | **4 Báo Cáo Học Phần (KT1 - KT4)** | [`SDLC_GiaiDoan1_PhanTich_ThietKe.md`](docs/Reports/SDLC_GiaiDoan1_PhanTich_ThietKe.md), [`SDLC_GiaiDoan2_ChucNang_QuanLy.md`](docs/Reports/SDLC_GiaiDoan2_ChucNang_QuanLy.md), [`SDLC_GiaiDoan3_TichHopAI_TestAI.md`](docs/Reports/SDLC_GiaiDoan3_TichHopAI_TestAI.md), [`SDLC_GiaiDoan4_BaoCao_HuongDan_TrienKhai.md`](docs/Reports/SDLC_GiaiDoan4_BaoCao_HuongDan_TrienKhai.md). |
 | 18 | [`docs/Reports/phan-chia-cong-viec.md`](docs/Reports/phan-chia-cong-viec.md) | Bảng phân công nhiệm vụ và tỷ lệ đóng góp chi tiết giữa 2 thành viên nhóm (50% - 50%). |
-| 19 | [`docs/Reports/Tai_Lieu_Thiet_Ke_Huong_Doi_Tuong_Nhom_07.docx`](docs/Reports/Tai_Lieu_Thiet_Ke_Huong_Doi_Tuong_Nhom_07.docx) | Bản Word thiết kế hướng đối tượng hoàn chỉnh của Nhóm 07. |
+| 19 | [`docs/Reports/Tai_Lieu_Thiet_Ke_Huong_Doi_Tuong_Nhom_07.docx`](docs/Reports/Tai_Lieu_Thiet_Ke_Huong_Doi_Tuong_Nhom_07.docx) | Bản Word thiết kế hướng đối tượng hoàn chỉnh của Nhóm 03. |
 
 ---
 
@@ -306,7 +306,7 @@ pytest backend/tests/ -v
 
 - Dự án được phát hành mã nguồn mở dưới giấy phép **[MIT License](LICENSE)**.
 - Sản phẩm được nghiên cứu và phát triển phục vụ Đồ án Học phần: **Ứng dụng Trí tuệ Nhân tạo - ICTU 2026-2027**.
-- Tác giả: **Nhóm 07** – **Đinh Gia Bảo (Trưởng nhóm)** và **Trần Đặng Công Tâm** ([@dtc245220019-create](https://github.com/dtc245220019-create) & [@tamtran2k6zz](https://github.com/tamtran2k6zz)).
+- Tác giả: **Nhóm 03** – **Đinh Gia Bảo (Trưởng nhóm)** và **Trần Đặng Công Tâm** ([@dtc245220019-create](https://github.com/dtc245220019-create) & [@tamtran2k6zz](https://github.com/tamtran2k6zz)).
 
 ---
 
