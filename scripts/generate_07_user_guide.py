@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 Script sinh file 07_GenAI_SoftwareDevelopment_user-guide.docx
-Sổ tay Hướng dẫn sử dụng hệ thống CMS-AI cho 4 vai trò (Nhóm 07).
+Sổ tay Hướng dẫn sử dụng hệ thống CMS-AI cho 4 vai trò (Nhóm 03).
+Bổ sung:
+- Sơ đồ tương tác luồng giao diện 4 vai trò (diagram_ui_flows_role.png)
+- Hướng dẫn thao tác chi tiết từng trường nhập liệu cho Lễ tân, Bác sĩ, Kế toán, Admin
+- Bảng tiêu chí chấm điểm và phiếu đánh giá kịch bản Demo 8 bước cho Hội đồng nghiệm thu
+- Sổ tay chẩn đoán và khắc phục sự cố kỹ thuật thường gặp (Troubleshooting Guide)
 """
 
+import os
+import sys
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -16,6 +23,7 @@ from docx_style_helpers import (
     add_h2,
     add_h3,
     add_p,
+    add_diagram,
     add_code_block,
     format_row,
     set_table_borders,
@@ -39,11 +47,11 @@ def build_user_guide():
     add_h1(doc, "1. GIỚI THIỆU ỨNG DỤNG")
     add_p(
         doc,
-        "Hệ thống quản lý phòng khám đa khoa thông minh CMS-AI là giải pháp phần mềm chuyên biệt phục vụ các cơ sở y tế tư nhân. "
+        "Hệ thống quản lý phòng khám đa khoa thông minh CMS-AI là giải pháp phần mềm chuyên biệt phục vụ các cơ sở y tế tư nhân quy mô vừa và nhỏ. "
         "Ứng dụng số hóa toàn diện quy trình tiếp đón người bệnh, điều phối lịch hẹn, quản lý hồ sơ bệnh án điện tử EMR, "
-        "kê đơn thuốc và thanh toán viện phí không dùng tiền mặt qua mã VietQR chuẩn quốc gia. "
-        "Điểm khác biệt của hệ thống nằm ở động cơ Trợ lý AI Hành chính 3 lớp, giúp bác sĩ tóm tắt hồ sơ cũ trong 15 giây, "
-        "hỗ trợ người bệnh hỏi đáp quy trình khám tự động và tự động sinh bản dặn dò sau khám theo mẫu y tế chuẩn mực."
+        "kê đơn thuốc điện tử và thanh toán viện phí không dùng tiền mặt qua mã VietQR chuẩn quốc gia. "
+        "Điểm đột phá của hệ thống nằm ở động cơ Trợ lý AI Hành chính 3 lớp (AI Assistant): giúp bác sĩ tóm tắt hồ sơ cũ trong 15 giây, "
+        "hỗ trợ người bệnh hỏi đáp quy trình khám tự động (RAG) và tự động sinh bản dặn dò sau khám theo mẫu y tế chuẩn mực."
     )
 
     # 2. CẤU HÌNH PHẦN CỨNG - PHẦN MỀM
@@ -62,7 +70,7 @@ def build_user_guide():
     add_p(
         doc,
         "Phía máy chủ: Hệ điều hành Windows 10/11 Pro hoặc Ubuntu Linux 22.04 LTS; "
-        "Nền tảng ảo hóa Docker Desktop 4.x và Docker Compose; Trình quản lý gói Python 3.11 trở lên.\n"
+        "Nền tảng ảo hóa Docker Desktop 4.x và Docker Compose; Trình quản lý gói Python 3.11/3.12.\n"
         "Phía máy trạm: Trình duyệt web hiện đại phiên bản mới nhất như Google Chrome, Microsoft Edge hoặc Mozilla Firefox."
     )
 
@@ -78,14 +86,14 @@ def build_user_guide():
   Cách 1: Khởi chạy 1-Click trên Windows (Khuyến nghị cho phòng khám)
   - Bước 1: Mở thư mục chứa mã nguồn dự án.
   - Bước 2: Nhấp đúp chuột vào tệp tin 'run_app.bat' hoặc 'start_demo.bat'.
-  - Bước 3: Hệ thống tự động kích hoạt CSDL MySQL, Backend FastAPI và Frontend React.
+  - Bước 3: Hệ thống tự động kích hoạt CSDL MySQL/PostgreSQL, Backend FastAPI và Frontend React.
   - Bước 4: Trình duyệt web tự động mở địa chỉ giao diện: http://localhost:5173
 
   Cách 2: Khởi chạy qua Docker Compose (Môi trường máy chủ chuyên nghiệp)
   - Lệnh khởi động: docker-compose up -d --build
   - Địa chỉ Frontend: http://localhost:3000 (hoặc http://localhost:5173)
   - Địa chỉ Backend Swagger API: http://localhost:8000/docs
-  - Địa chỉ Quản trị CSDL pgAdmin / phpMyAdmin: http://localhost:8080
+  - Địa chỉ Quản trị CSDL: http://localhost:8080
 +----------------------------------------------------------------------------------------------------+"""
     add_code_block(doc, startup_guide_ascii)
 
@@ -122,8 +130,16 @@ def build_user_guide():
     doc.add_paragraph().paragraph_format.space_after = Pt(12)
 
     # 3. CÁC CHỨC NĂNG CHÍNH THEO 4 VAI TRÒ
-    add_h1(doc, "3. CÁC CHỨC NĂNG CHÍNH")
-    add_p(doc, "Các chức năng chính được phân chia theo 4 nhóm tác nhân (Actors) đã xác định trong tài liệu SRS:")
+    add_h1(doc, "3. CÁC CHỨC NĂNG CHÍNH VÀ LUỒNG THAO TÁC GIAO DIỆN")
+    add_p(
+        doc,
+        "Hệ thống CMS-AI thiết kế luồng màn hình trực quan, công thái học, giúp từng bộ phận nhân sự "
+        "thực hiện công việc chuyên trách một cách nhanh chóng và chính xác:"
+    )
+
+    # Chèn sơ đồ màn hình 4 vai trò
+    flow_role_img = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "generated_diagrams", "diagram_ui_flows_role.png"))
+    add_diagram(doc, flow_role_img, "Hình 3.1: Sơ đồ luồng giao diện người dùng theo 4 vai trò chuyên trách (300 DPI)", width=Inches(6.4))
 
     add_h2(doc, "3.1. Chức năng của Lễ tân (Receptionist)")
     rec_steps = [
@@ -233,6 +249,90 @@ def build_user_guide():
         r2 = p.add_run(desc)
         r2.font.name = "Times New Roman"
         r2.font.size = Pt(10.5)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(6)
+
+    add_h2(doc, "4.1. Bảng tiêu chí đánh giá kịch bản Demo (Rubric chấm điểm)")
+    add_p(
+        doc,
+        "Bảng đối soát tiêu chí đánh giá dành cho Giảng viên hướng dẫn và Hội đồng chấm điểm đồ án:"
+    )
+
+    rubric_data = [
+        ("1", "Khởi động và Kiến trúc", "Khởi chạy 1-Click thành công, Swagger UI sẵn sàng, giao diện hiển thị chuẩn", "1.0 điểm", "Đạt"),
+        ("2", "Tiếp đón và BHYT", "Tìm kiếm CCCD nhanh, đăng ký bệnh nhân mới, lưu số thẻ BHYT", "1.5 điểm", "Đạt"),
+        ("3", "Chống trùng lịch hẹn", "ConflictChecker phát hiện xung đột thời gian thực, trả về HTTP 409", "1.5 điểm", "Đạt"),
+        ("4", "Lâm sàng EMR & AI Pre-visit", "Tính BMI tự động, tra cứu ICD-10, tóm tắt bệnh sử khử PII trong < 15s", "2.0 điểm", "Đạt"),
+        ("5", "Kê đơn & Cảnh báo dị ứng", "Cảnh báo đỏ tương tác dị ứng tiền sử thuốc, trừ tồn kho chính xác", "1.5 điểm", "Đạt"),
+        ("6", "Viện phí & VietQR", "Khấu trừ BHYT 80%, sinh mã QR động NAPAS 247, in biên lai", "1.5 điểm", "Đạt"),
+        ("7", "Quản trị & Audit Logs", "Dashboard biểu đồ doanh thu, xem nhật ký kiểm toán và an toàn AI", "1.0 điểm", "Đạt")
+    ]
+    tbl_rubric = doc.add_table(rows=len(rubric_data) + 1, cols=5)
+    tbl_rubric.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tbl_rubric.autofit = False
+    col_w_rb = [Inches(0.6), Inches(1.8), Inches(2.7), Inches(1.0), Inches(0.6)]
+    for row in tbl_rubric.rows:
+        for idx, w in enumerate(col_w_rb):
+            row.cells[idx].width = w
+
+    headers_rb = ["STT", "Hạng mục đánh giá", "Tiêu chuẩn nghiệm thu chức năng", "Điểm tối đa", "Kết quả"]
+    for i, h in enumerate(headers_rb):
+        tbl_rubric.cell(0, i).text = h
+    format_row(tbl_rubric.rows[0], HEX_HEADER_BG, RGBColor(255, 255, 255), bold=True, is_header=True)
+
+    for r_idx, (rb_stt, rb_name, rb_std, rb_pts, rb_res) in enumerate(rubric_data):
+        row = tbl_rubric.rows[r_idx + 1]
+        row.cells[0].text = rb_stt
+        row.cells[1].text = rb_name
+        row.cells[2].text = rb_std
+        row.cells[3].text = rb_pts
+        row.cells[4].text = rb_res
+        bg = HEX_ROW_ALT if (r_idx % 2 == 1) else "FFFFFF"
+        format_row(row, bg, RGBColor(15, 23, 42), bold=False, is_header=False)
+    set_table_borders(tbl_rubric)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(12)
+
+    # 5. SỔ TAY CHẨN ĐOÁN VÀ KHẮC PHỤC SỰ CỐ
+    add_h1(doc, "5. SỔ TAY CHẨN ĐOÁN VÀ KHẮC PHỤC SỰ CỐ (TROUBLESHOOTING)")
+    add_p(
+        doc,
+        "Hướng dẫn nhanh cách xử lý các tình huống bất thường trong quá trình vận hành hệ thống tại phòng khám:"
+    )
+
+    issues_data = [
+        ("Sự cố 1: Không kết nối được CSDL (Database Connection Refused)",
+         "Nguyên nhân: Dịch vụ MySQL/PostgreSQL chưa được bật hoặc cấu hình sai biến môi trường DATABASE_URL trong tệp .env.\n"
+         "Cách xử lý: Kiểm tra trạng thái dịch vụ bằng lệnh 'docker ps' hoặc 'services.msc'. Đảm bảo cổng 3306 (MySQL) hoặc 5432 (Postgres) đang mở và kiểm tra chuỗi kết nối trong backend/.env."),
+
+        ("Sự cố 2: Lỗi gọi Trợ lý AI khi mất kết nối Internet",
+         "Nguyên nhân: Dịch vụ Google Gemini API không thể truy cập do mạng Internet gián đoạn hoặc API Key hết hạn ngạch (Quota Exceeded).\n"
+         "Cách xử lý: Hệ thống tự động kích hoạt cơ chế MockFallbackEngine cục bộ để tạo câu trả lời mẫu theo luật nội bộ. Người quản trị có thể thay thế GEMINI_API_KEY mới trong backend/.env mà không cần dừng hệ thống."),
+
+        ("Sự cố 3: Đặt lịch báo trùng giờ bất thường dù bác sĩ chưa có lịch",
+         "Nguyên nhân: Ca trực (DoctorShift) của bác sĩ trong ngày đó chưa được Quản trị viên kích hoạt hoặc giờ đặt nằm ngoài khung giờ trực.\n"
+         "Cách xử lý: Đăng nhập quyền Admin, vào mục 'Phân ca bác sĩ', kiểm tra ca trực tương ứng đã được gán trạng thái SCHEDULED và đúng buồng khám."),
+
+        ("Sự cố 4: Giao diện trắng trang do cổng mạng bị xung đột",
+         "Nguyên nhân: Cổng 5173 hoặc 8000 đã bị chiếm dụng bởi ứng dụng khác đang chạy ngầm trên máy tính.\n"
+         "Cách xử lý: Chạy tệp 'kill_ports.bat' có sẵn trong thư mục dự án để giải phóng cổng, sau đó khởi chạy lại bằng 'run_app.bat'."),
+
+        ("Sự cố 5: Mã VietQR không hiển thị trên màn hình thu ngân",
+         "Nguyên nhân: Kế toán chưa cấu hình thông tin tài khoản ngân hàng thụ hưởng của phòng khám (BANK_BIN và ACCOUNT_NO).\n"
+         "Cách xử lý: Mở file backend/.env, điền chính xác mã ngân hàng thụ hưởng (VD: MB hoặc 970422) và số tài khoản chính xác để máy chủ sinh link VietQR hợp lệ.")
+    ]
+
+    for title, fix in issues_data:
+        p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(3)
+        p.paragraph_format.space_after = Pt(2)
+        r1 = p.add_run(f"• {title}:\n")
+        r1.font.bold = True
+        r1.font.name = "Times New Roman"
+        r1.font.size = Pt(11)
+        r2 = p.add_run(fix)
+        r2.font.name = "Times New Roman"
+        r2.font.size = Pt(10)
 
     save_document(doc, "07_GenAI_SoftwareDevelopment_user-guide.docx")
 

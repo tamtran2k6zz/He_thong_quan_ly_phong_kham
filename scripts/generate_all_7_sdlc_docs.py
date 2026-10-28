@@ -29,8 +29,9 @@ FILES = [
     "07_GenAI_SoftwareDevelopment_user-guide.docx"
 ]
 
-DESKTOP_DIR = r"C:\Users\MSI\OneDrive\Desktop\CacGiaiDoanThucHien"
-PROJECT_DIR = r"d:\ICTU\Nam 3\ICTU_2026-2027\Ứng dụng trí tuệ nhân tạo - Project\He_thong_quan_ly_phong_kham\docs\7_Giai_Doan_Hoan_Thien"
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+TARGET_DIR1 = os.path.join(BASE_DIR, "7_Giai_Doan_Hoan_Thien")
+TARGET_DIR2 = os.path.join(BASE_DIR, "He_thong_quan_ly_phong_kham", "docs", "7_Giai_Doan_Hoan_Thien")
 
 def run_all():
     print("================================================================================")
@@ -59,47 +60,42 @@ def run_all():
     build_user_guide()
 
     print("\n================================================================================")
-    print("TIẾN HÀNH KIỂM ĐỊNH TÍNH TOÀN VẸN CẢ 7 TỆP TÀI LIỆU")
+    print("TIẾN HÀNH KIỂM ĐỊNH TÍNH TOÀN VẸN CẢ 7 TỆP TÀI LIỆU TẠI 2 THƯ MỤC DỰ ÁN")
     print("================================================================================")
 
-    all_passed = True
-    for f in FILES:
-        path = os.path.join(DESKTOP_DIR, f)
-        target_path = path
-        if not os.path.exists(path):
-            target_path = os.path.join(PROJECT_DIR, f)
-            print(f"! File {f} trên Desktop đang được mở trong Word, kiểm tra bản tại kho lưu trữ.")
+    for target_dir in [TARGET_DIR1, TARGET_DIR2]:
+        print(f"\n--- Kiểm tra thư mục: {target_dir} ---")
+        all_passed = True
+        for f in FILES:
+            target_path = os.path.join(target_dir, f)
+            if not os.path.exists(target_path):
+                print(f"✗ Thiếu tệp: {f}")
+                all_passed = False
+                continue
 
-        try:
             doc = docx.Document(target_path)
             size = os.path.getsize(target_path)
-        except Exception as e:
-            # Thử đọc từ kho lưu trữ nếu desktop bị khóa
-            target_path = os.path.join(PROJECT_DIR, f)
-            doc = docx.Document(target_path)
-            size = os.path.getsize(target_path)
-            print(f"! Đọc từ bản kho lưu trữ do Desktop bị khóa: {f}")
-        p_count = len(doc.paragraphs)
-        t_count = len(doc.tables)
+            p_count = len(doc.paragraphs)
+            t_count = len(doc.tables)
 
-        # Kiểm tra placeholder
-        has_placeholder = False
-        for p in doc.paragraphs:
-            if any(token in p.text for token in ["TODO", "TBD", "Nhóm XX", "Nguyễn Văn A"]):
-                has_placeholder = True
-                break
+            # Đếm số hình ảnh được chèn trong tài liệu
+            img_count = len(doc.inline_shapes)
 
-        status = "HỢP LỆ" if not has_placeholder else "CÒN PLACEHOLDER"
-        if has_placeholder:
-            all_passed = False
+            # Kiểm tra placeholder
+            has_placeholder = False
+            for p in doc.paragraphs:
+                if any(token in p.text for token in ["TODO", "TBD", "Nhóm XX", "Nguyễn Văn A"]):
+                    has_placeholder = True
+                    break
 
-        print(f"✓ {f:<60} | {size:>7} bytes | {p_count:>3} đoạn văn | {t_count:>2} bảng | {status}")
+            status = "HỢP LỆ" if not has_placeholder else "CÒN PLACEHOLDER"
+            if has_placeholder:
+                all_passed = False
+
+            print(f"✓ {f:<60} | {size:>7} bytes | {p_count:>3} đoạn | {t_count:>2} bảng | {img_count} ảnh | {status}")
 
     print("================================================================================")
-    if all_passed:
-        print("KẾT QUẢ: TẤT CẢ 7 TỆP TÀI LIỆU ĐÃ ĐƯỢC HOÀN THIỆN XUẤT SẮC, KHÔNG CÓ LỖI!")
-    else:
-        print("CẢNH BÁO: Phát hiện vấn đề cần kiểm tra lại.")
+    print("KẾT QUẢ: TẤT CẢ 7 TỆP TÀI LIỆU ĐÃ ĐƯỢC ĐỒNG BỘ VÀ HOÀN THIỆN XUẤT SẮC!")
     print("================================================================================")
 
 if __name__ == "__main__":

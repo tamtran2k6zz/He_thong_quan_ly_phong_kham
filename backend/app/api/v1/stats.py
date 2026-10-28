@@ -26,7 +26,9 @@ from backend.app.schemas.stats import (
     StatsOverviewResponse,
     RevenueTrendItem,
     SpecialtyStatsResponse,
-    DoctorWorkloadResponse
+    DoctorWorkloadResponse,
+    DailyStatsResponse,
+    RevenueStatsResponse
 )
 from backend.app.api.deps import require_all_staff
 
@@ -94,9 +96,9 @@ def compute_overview_stats(db: Session) -> StatsOverviewResponse:
         sp_revenue = 0.0
         if doc_ids:
             # Count distinct patients
-            p_count = db.query(distinct(MedicalRecord.patient_id)).filter(
+            p_count = db.query(func.count(distinct(MedicalRecord.patient_id))).filter(
                 MedicalRecord.doctor_id.in_(doc_ids)
-            ).count()
+            ).scalar() or 0
 
             # Sum revenue
             rev = db.query(
@@ -236,9 +238,9 @@ def get_patients_by_specialty(
         sp_revenue = 0.0
 
         if doc_ids:
-            patient_count = db.query(distinct(MedicalRecord.patient_id)).filter(
+            patient_count = db.query(func.count(distinct(MedicalRecord.patient_id))).filter(
                 MedicalRecord.doctor_id.in_(doc_ids)
-            ).count()
+            ).scalar() or 0
 
             appointment_count = db.query(Appointment).filter(
                 Appointment.doctor_id.in_(doc_ids)
@@ -322,3 +324,97 @@ def get_doctor_workload(
         )
 
     return results
+
+
+@router.get("/dashboard", response_model=StatsOverviewResponse)
+def get_stats_dashboard(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_all_staff)
+):
+    """Overview dashboard statistics (frontend alias)."""
+    return compute_overview_stats(db)
+
+
+@router.get("/daily", response_model=DailyStatsResponse)
+def get_daily_stats(
+    date_val: Optional[date] = Query(None, alias="date", description="Query date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_all_staff)
+):
+    """Daily statistics for appointments, visits, and revenue."""
+    target_date = date_val or date.today()
+    day_start = datetime.combine(target_date, datetime.min.time())
+    day_end = datetime.combine(target_date, datetime.max.time())
+
+    total_appts = db.query(Appointment).filter(
+        Appointment.appointment_date == target_date
+    ).count()
+
+    completed_visits = db.query(MedicalRecord).filter(
+        MedicalRecord.exam_date >= day_start,
+        MedicalRecord.exam_date <= day_end
+    ).count()
+
+    new_pats = db.query(Patient).filter(
+        Patient.created_at >= day_start,
+        Patient.created_at <= day_end
+    ).count()
+
+    daily_rev = db.query(
+        func.coalesce(func.sum(Invoice.patient_pay_amount), 0.0)
+    ).filter(
+        Invoice.payment_status == PaymentStatus.PAID.value,
+        Invoice.paid_at >= day_start,
+        Invoice.paid_at <= day_end
+    ).scalar() or 0.0
+
+    return DailyStatsResponse(
+        date=target_date.isoformat(),
+        total_appointments=total_appts,
+        completed_visits=completed_visits,
+        new_patients=new_pats,
+        daily_revenue=float(daily_rev)
+    )
+
+
+@router.get("/revenue", response_model=RevenueStatsResponse)
+def get_revenue_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_all_staff)
+):
+    """Revenue breakdown statistics."""
+    paid_invs = db.query(Invoice).filter(
+        Invoice.payment_status == PaymentStatus.PAID.value
+    ).all()
+
+    total_rev = sum(float(i.total_amount) for i in paid_invs)
+    cons_rev = sum(float(i.consultation_fee) for i in paid_invs)
+    serv_rev = sum(float(i.service_fee) for i in paid_invs)
+    med_rev = sum(float(i.medicine_fee) for i in paid_invs)
+    ins_cov = sum(float(i.insurance_discount) for i in paid_invs)
+    pat_paid = sum(float(i.patient_pay_amount) for i in paid_invs)
+
+    pending_amount = db.query(
+        func.coalesce(func.sum(Invoice.patient_pay_amount), 0.0)
+    ).filter(
+        Invoice.payment_status == PaymentStatus.PENDING.value
+    ).scalar() or 0.0
+
+    return RevenueStatsResponse(
+        total_revenue=total_rev,
+        consultation_revenue=cons_rev,
+        service_revenue=serv_rev,
+        medicine_revenue=med_rev,
+        insurance_covered_amount=ins_cov,
+        patient_paid_amount=pat_paid,
+        pending_amount=float(pending_amount)
+    )
+
+
+@router.get("/specialties", response_model=List[SpecialtyStatsResponse])
+def get_specialty_stats_alias(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_all_staff)
+):
+    """Specialty distribution statistics (frontend alias)."""
+    return get_patients_by_specialty(db=db, current_user=current_user)

@@ -4,6 +4,7 @@ Script sinh file 01_GenAI_SoftwareDevelopment_project-plan.docx
 Kế hoạch thực hiện dự án 9 tuần cho Nhóm 07 (Đinh Gia Bảo, Trần Đặng Công Tâm).
 """
 
+import os
 import sys
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -14,7 +15,9 @@ from docx_style_helpers import (
     add_header_block,
     add_team_meta,
     add_h1,
+    add_h2,
     add_p,
+    add_diagram,
     format_row,
     set_table_borders,
     save_document,
@@ -40,6 +43,16 @@ def build_project_plan():
         "Hai thành viên phối hợp chặt chẽ qua bốn giai đoạn SDLC (KT1, KT2, KT3, KT4) để xây dựng hệ thống quản lý phòng khám đa khoa CMS-AI."
     )
 
+    add_h2(doc, "Sơ đồ Gantt tiến độ triển khai dự án qua 4 giai đoạn SDLC")
+    add_p(
+        doc,
+        "Biểu đồ Gantt thể hiện trực quan tiến độ 9 tuần triển khai dự án CMS-AI, phân bổ nhiệm vụ giữa hai thành viên "
+        "và đánh dấu rõ các cột mốc cổng kiểm soát chất lượng con người (Human Gate 1, 2, 3):"
+    )
+    gantt_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "generated_diagrams", "diagram_project_gantt.png"))
+    add_diagram(doc, gantt_path, "Hình 1.1: Sơ đồ Gantt tiến độ triển khai 9 tuần và các mốc kiểm soát chất lượng Human Gate")
+
+    add_h2(doc, "Bảng phân rã chi tiết 46 hạng mục công việc theo tuần")
     # Dữ liệu 46 công việc chi tiết chia cho 9 tuần (khớp 47 hàng gồm cả tiêu đề)
     tasks_data = [
         # Tuần 1: Khảo sát bài toán & xác định phạm vi

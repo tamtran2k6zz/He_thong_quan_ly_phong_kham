@@ -223,25 +223,46 @@ def add_code_block(doc, text):
     r.font.color.rgb = RGBColor(15, 23, 42)
     doc.add_paragraph().paragraph_format.space_after = Pt(4)
 
+def add_diagram(doc, img_path, caption, width=Inches(6.3)):
+    """Chèn hình ảnh sơ đồ/biểu đồ kỹ thuật chất lượng cao với căn giữa và chú thích chuẩn."""
+    if not os.path.exists(img_path):
+        print(f"! Không tìm thấy ảnh: {img_path}")
+        return
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_before = Pt(8)
+    p.paragraph_format.space_after = Pt(3)
+    run = p.add_run()
+    run.add_picture(img_path, width=width)
+
+    p_cap = doc.add_paragraph()
+    p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_cap.paragraph_format.space_before = Pt(2)
+    p_cap.paragraph_format.space_after = Pt(10)
+    r_cap = p_cap.add_run(caption)
+    r_cap.font.name = "Times New Roman"
+    r_cap.font.size = Pt(9.5)
+    r_cap.font.italic = True
+    r_cap.font.color.rgb = COLOR_MUTED
+
 def save_document(doc, filename):
-    """Lưu file đồng thời vào thư mục Desktop của người dùng và thư mục lưu trữ dự án."""
-    desktop_dir = r"C:\Users\MSI\OneDrive\Desktop\CacGiaiDoanThucHien"
-    project_dir = r"d:\ICTU\Nam 3\ICTU_2026-2027\Ứng dụng trí tuệ nhân tạo - Project\He_thong_quan_ly_phong_kham\docs\7_Giai_Doan_Hoan_Thien"
-    
-    os.makedirs(desktop_dir, exist_ok=True)
-    os.makedirs(project_dir, exist_ok=True)
+    """Lưu file đồng thời vào cả hai thư mục mục tiêu trong dự án."""
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    target_dirs = [
+        os.path.join(base_dir, "7_Giai_Doan_Hoan_Thien"),
+        os.path.join(base_dir, "He_thong_quan_ly_phong_kham", "docs", "7_Giai_Doan_Hoan_Thien"),
+        r"C:\Users\MSI\OneDrive\Desktop\CacGiaiDoanThucHien"
+    ]
 
-    dest_desktop = os.path.join(desktop_dir, filename)
-    dest_project = os.path.join(project_dir, filename)
+    for tdir in target_dirs:
+        try:
+            os.makedirs(tdir, exist_ok=True)
+            dest = os.path.join(tdir, filename)
+            doc.save(dest)
+            print(f"-> Đã lưu thành công vào: {dest}")
+        except PermissionError:
+            print(f"! Cảnh báo: Tệp {filename} đang mở tại {tdir}, hãy đóng tệp để cập nhật.")
+        except Exception as e:
+            # Bỏ qua nếu thư mục ngoài hệ thống không truy cập được
+            pass
 
-    try:
-        doc.save(dest_desktop)
-        print(f"-> Đã lưu thành công vào Desktop: {filename}")
-    except PermissionError:
-        print(f"! Cảnh báo: Tệp {filename} đang mở trong Word trên Desktop, hãy đóng tệp để cập nhật bản mới.")
-
-    try:
-        doc.save(dest_project)
-        print(f"-> Đã lưu thành công vào kho lưu trữ: {filename}")
-    except PermissionError:
-        print(f"! Cảnh báo: Tệp {filename} đang mở trong Word trong dự án.")

@@ -12,6 +12,9 @@ from docx.enum.table import WD_TABLE_ALIGNMENT, WD_ALIGN_VERTICAL
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
+from docx_style_helpers import add_diagram, save_document
+
+
 def set_cell_background(cell, fill_hex):
     """Đặt màu nền cho ô trong bảng"""
     tc_pr = cell._element.get_or_add_tcPr()
@@ -240,8 +243,11 @@ def build_docx():
     add_h1(doc, "1. MÔ HÌNH LỚP (CLASS DIAGRAM)")
     p = doc.add_paragraph()
     p.add_run("Mô hình lớp (Class Diagram) tổng thể của ")
-    p.add_run("Hệ thống quản lý phòng khám có tích hợp AI").font.bold = True
-    p.add_run(" mô tả chi tiết cấu trúc tĩnh của hệ thống, bao gồm các thực thể dữ liệu nghiệp vụ (Domain Entities), các dịch vụ điều phối thuật toán (Core Services), và hệ sinh thái Trợ lý AI Hành chính 3 lớp:")
+    p.add_run("Hệ thống quản lý phòng khám có tích hợp AI (CMS-AI)").font.bold = True
+    p.add_run(" mô tả chi tiết cấu trúc tĩnh của hệ thống, bao gồm 14 thực thể dữ liệu nghiệp vụ (Domain Entities), 4 dịch vụ nghiệp vụ và tầng bảo vệ an toàn AI 3 lớp:")
+
+    class_diagram_img = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "generated_diagrams", "diagram_class_model.png"))
+    add_diagram(doc, class_diagram_img, "Hình 1.1: Sơ đồ lớp chi tiết Hệ thống phòng khám CMS-AI (UML Class Diagram 300 DPI)", width=Inches(6.4))
 
     add_code_block(doc,
 """+-----------------------------------------------------------------------------------------------------------------------+
@@ -1114,23 +1120,364 @@ def build_docx():
     )
 
     # =========================================================================
-    # MỤC 3: BẢNG TỔNG HỢP & MA TRẬN ÁNH XẠ ĐÁP ỨNG QUY TRÌNH HƯỚNG ĐỐI TƯỢNG
+
+    # -------------------------------------------------------------------------
+    # 2.11 LỚP CLINIC (PHÒNG KHÁM / BUỒNG KHÁM)
+    # -------------------------------------------------------------------------
+    add_h2(doc, "2.11. Lớp Clinic (Thực thể Buồng khám)")
+    p = doc.add_paragraph()
+    p.add_run("Lớp ").font.name = "Times New Roman"
+    p.add_run("Clinic").font.bold = True
+    p.add_run(" quản lý danh mục các buồng khám chuyên khoa trong cơ sở y tế (VD: Phòng khám Nội 101, Phòng Nhi 202). Lớp này liên kết trực tiếp với ca trực bác sĩ và lịch hẹn khám.")
+
+    c_fields = [
+        ("Tên thuộc tính", "Kiểu dữ liệu", "Kích thước", "Ý nghĩa và Ràng buộc"),
+        ("id", "Integer", "4 bytes", "Khóa chính tự tăng (PK), định danh duy nhất buồng khám"),
+        ("name", "String", "100 ký tự", "Tên buồng khám hiển thị (VD: Phòng khám Nội 101)"),
+        ("room_number", "String", "20 ký tự", "Số hiệu phòng trên biển hiệu cơ sở vật chất (Unique)"),
+        ("specialty_id", "Integer", "4 bytes", "Khóa ngoại (FK) tham chiếu tới bảng specialties.id"),
+        ("is_active", "Boolean", "1 byte", "Trạng thái buồng khám sẵn sàng tiếp đón bệnh nhân")
+    ]
+    tbl_c = doc.add_table(rows=len(c_fields), cols=4)
+    tbl_c.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tbl_c.columns[0].width = Inches(1.3)
+    tbl_c.columns[1].width = Inches(1.1)
+    tbl_c.columns[2].width = Inches(1.1)
+    tbl_c.columns[3].width = Inches(3.0)
+    for idx, (f1, f2, f3, f4) in enumerate(c_fields):
+        row = tbl_c.rows[idx]
+        row.cells[0].text, row.cells[1].text, row.cells[2].text, row.cells[3].text = f1, f2, f3, f4
+        if idx == 0:
+            format_row(row, "0D9488", RGBColor(255, 255, 255), is_header=True)
+        else:
+            format_row(row, "FFFFFF" if idx % 2 == 1 else "F8FAFC", RGBColor(30, 41, 59))
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(4)
+    add_method_spec(
+        doc,
+        name="get_active_shifts",
+        desc="Truy vấn danh sách các ca trực của bác sĩ được phân công tại buồng khám trong một ngày cụ thể.",
+        inputs="query_date: Date (Ngày cần kiểm tra ca trực).",
+        output="active_shifts: List[DoctorShift], danh sách ca trực hợp lệ.",
+        flow="1. Lọc bảng doctor_shifts theo clinic_id = self.id và shift_date = query_date.\\n2. Sắp xếp theo start_time tăng dần.\\n3. Trả về danh sách ca trực.",
+        start_cond="Buồng khám đang ở trạng thái hoạt động (is_active = True).",
+        end_cond="Trả về danh sách ca trực phục vụ điều phối lịch hẹn."
+    )
+
+    # -------------------------------------------------------------------------
+    # 2.12 LỚP SPECIALTY (CHUYÊN KHOA KHÁM BỆNH)
+    # -------------------------------------------------------------------------
+    add_h2(doc, "2.12. Lớp Specialty (Thực thể Chuyên khoa)")
+    p = doc.add_paragraph()
+    p.add_run("Lớp ").font.name = "Times New Roman"
+    p.add_run("Specialty").font.bold = True
+    p.add_run(" đại diện cho các chuyên khoa chuyên môn y tế của phòng khám (Nội khoa, Ngoại khoa, Nhi khoa, Tai Mũi Họng, Răng Hàm Mặt).")
+
+    sp_fields = [
+        ("Tên thuộc tính", "Kiểu dữ liệu", "Kích thước", "Ý nghĩa và Ràng buộc"),
+        ("id", "Integer", "4 bytes", "Khóa chính tự tăng (PK), định danh duy nhất chuyên khoa"),
+        ("name", "String", "100 ký tự", "Tên chuyên khoa y tế (Unique, Not Null)"),
+        ("description", "String", "255 ký tự", "Mô tả phạm vi chuyên môn và các chứng bệnh tiếp nhận"),
+        ("is_active", "Boolean", "1 byte", "Trạng thái chuyên khoa đang hoạt động")
+    ]
+    tbl_sp = doc.add_table(rows=len(sp_fields), cols=4)
+    tbl_sp.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tbl_sp.columns[0].width = Inches(1.3)
+    tbl_sp.columns[1].width = Inches(1.1)
+    tbl_sp.columns[2].width = Inches(1.1)
+    tbl_sp.columns[3].width = Inches(3.0)
+    for idx, (f1, f2, f3, f4) in enumerate(sp_fields):
+        row = tbl_sp.rows[idx]
+        row.cells[0].text, row.cells[1].text, row.cells[2].text, row.cells[3].text = f1, f2, f3, f4
+        if idx == 0:
+            format_row(row, "0D9488", RGBColor(255, 255, 255), is_header=True)
+        else:
+            format_row(row, "FFFFFF" if idx % 2 == 1 else "F8FAFC", RGBColor(30, 41, 59))
+
+    # -------------------------------------------------------------------------
+    # 2.13 LỚP DOCTORSHIFT (CA TRỰC BÁC SĨ)
+    # -------------------------------------------------------------------------
+    add_h2(doc, "2.13. Lớp DoctorShift (Thực thể Ca trực Bác sĩ)")
+    p = doc.add_paragraph()
+    p.add_run("Lớp ").font.name = "Times New Roman"
+    p.add_run("DoctorShift").font.bold = True
+    p.add_run(" xác định lịch trực cụ thể của từng bác sĩ theo ngày, ca sáng/chiều và phòng khám chỉ định. Đây là căn cứ bắt buộc để ConflictChecker kiểm tra điều kiện đặt lịch.")
+
+    ds_fields = [
+        ("Tên thuộc tính", "Kiểu dữ liệu", "Kích thước", "Ý nghĩa và Ràng buộc"),
+        ("id", "Integer", "4 bytes", "Khóa chính tự tăng (PK)"),
+        ("doctor_id", "Integer", "4 bytes", "Khóa ngoại (FK) tham chiếu tới bảng doctors.id"),
+        ("clinic_id", "Integer", "4 bytes", "Khóa ngoại (FK) tham chiếu tới bảng clinics.id"),
+        ("shift_date", "Date", "4 bytes", "Ngày làm việc của ca trực (YYYY-MM-DD)"),
+        ("start_time", "Time", "4 bytes", "Giờ bắt đầu ca trực (VD: 08:00:00)"),
+        ("end_time", "Time", "4 bytes", "Giờ kết thúc ca trực (VD: 12:00:00)"),
+        ("max_patients", "Integer", "4 bytes", "Số lượng bệnh nhân tối đa tiếp nhận trong một ca (mặc định 20)"),
+        ("is_active", "Boolean", "1 byte", "Trạng thái ca trực được kích hoạt")
+    ]
+    tbl_ds = doc.add_table(rows=len(ds_fields), cols=4)
+    tbl_ds.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tbl_ds.columns[0].width = Inches(1.3)
+    tbl_ds.columns[1].width = Inches(1.1)
+    tbl_ds.columns[2].width = Inches(1.1)
+    tbl_ds.columns[3].width = Inches(3.0)
+    for idx, (f1, f2, f3, f4) in enumerate(ds_fields):
+        row = tbl_ds.rows[idx]
+        row.cells[0].text, row.cells[1].text, row.cells[2].text, row.cells[3].text = f1, f2, f3, f4
+        if idx == 0:
+            format_row(row, "0D9488", RGBColor(255, 255, 255), is_header=True)
+        else:
+            format_row(row, "FFFFFF" if idx % 2 == 1 else "F8FAFC", RGBColor(30, 41, 59))
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(4)
+    add_method_spec(
+        doc,
+        name="is_within_shift",
+        desc="Kiểm tra một khung giờ khám bất kỳ có nằm trọn vẹn trong khoảng thời gian làm việc của ca trực hay không.",
+        inputs="target_start: Time, target_end: Time.",
+        output="is_valid: Boolean (True nếu hoàn toàn nằm trong ca trực, False nếu vượt giờ).",
+        flow="1. So sánh target_start >= self.start_time.\\n2. So sánh target_end <= self.end_time.\\n3. Trả về True nếu cả 2 điều kiện thỏa mãn.",
+        start_cond="Ca trực đang kích hoạt.",
+        end_cond="Xác thực tính hợp lệ về mặt thời gian trực."
+    )
+
+    # -------------------------------------------------------------------------
+    # 2.14 LỚP SERVICEORDER (CHỈ ĐỊNH DỊCH VỤ / CẬN LÂM SÀNG)
+    # -------------------------------------------------------------------------
+    add_h2(doc, "2.14. Lớp ServiceOrder (Thực thể Chỉ định dịch vụ)")
+    p = doc.add_paragraph()
+    p.add_run("Lớp ").font.name = "Times New Roman"
+    p.add_run("ServiceOrder").font.bold = True
+    p.add_run(" lưu trữ các chỉ định xét nghiệm, chụp X-quang, siêu âm hoặc thủ thuật cận lâm sàng do bác sĩ yêu cầu trong ca khám.")
+
+    so_fields = [
+        ("Tên thuộc tính", "Kiểu dữ liệu", "Kích thước", "Ý nghĩa và Ràng buộc"),
+        ("id", "Integer", "4 bytes", "Khóa chính tự tăng (PK)"),
+        ("medical_record_id", "Integer", "4 bytes", "Khóa ngoại tham chiếu medical_records.id"),
+        ("service_name", "String", "100 ký tự", "Tên dịch vụ kỹ thuật (VD: Chụp X-quang tim phổi)"),
+        ("unit_price", "Decimal", "8 bytes", "Đơn giá niêm yết của dịch vụ y tế"),
+        ("quantity", "Integer", "4 bytes", "Số lượng chỉ định thực hiện"),
+        ("status", "String", "20 ký tự", "Trạng thái chỉ định: PENDING, COMPLETED, CANCELLED"),
+        ("result_summary", "Text", "Biến đổi", "Tóm tắt kết luận cận lâm sàng sau khi thực hiện")
+    ]
+    tbl_so = doc.add_table(rows=len(so_fields), cols=4)
+    tbl_so.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tbl_so.columns[0].width = Inches(1.3)
+    tbl_so.columns[1].width = Inches(1.1)
+    tbl_so.columns[2].width = Inches(1.1)
+    tbl_so.columns[3].width = Inches(3.0)
+    for idx, (f1, f2, f3, f4) in enumerate(so_fields):
+        row = tbl_so.rows[idx]
+        row.cells[0].text, row.cells[1].text, row.cells[2].text, row.cells[3].text = f1, f2, f3, f4
+        if idx == 0:
+            format_row(row, "0D9488", RGBColor(255, 255, 255), is_header=True)
+        else:
+            format_row(row, "FFFFFF" if idx % 2 == 1 else "F8FAFC", RGBColor(30, 41, 59))
+
+    # -------------------------------------------------------------------------
+    # 2.15 LỚP PRESCRIPTIONITEM (CHI TIẾT ĐƠN THUỐC)
+    # -------------------------------------------------------------------------
+    add_h2(doc, "2.15. Lớp PrescriptionItem (Chi tiết thuốc trong đơn)")
+    p = doc.add_paragraph()
+    p.add_run("Lớp ").font.name = "Times New Roman"
+    p.add_run("PrescriptionItem").font.bold = True
+    p.add_run(" đóng vai trò bảng liên kết giữa đơn thuốc Prescription và dược phẩm Medicine, xác định số lượng cấp phát và chi tiết liều dùng theo từng buổi trong ngày.")
+
+    pi_fields = [
+        ("Tên thuộc tính", "Kiểu dữ liệu", "Kích thước", "Ý nghĩa và Ràng buộc"),
+        ("id", "Integer", "4 bytes", "Khóa chính tự tăng (PK)"),
+        ("prescription_id", "Integer", "4 bytes", "Khóa ngoại tham chiếu prescriptions.id"),
+        ("medicine_id", "Integer", "4 bytes", "Khóa ngoại tham chiếu medicines.id"),
+        ("quantity", "Integer", "4 bytes", "Tổng số viên/gói thuốc cần cấp phát"),
+        ("dosage", "String", "100 ký tự", "Liều lượng quy định mỗi lần uống (VD: 1 viên/lần)"),
+        ("morning", "Integer", "1 byte", "Số lượng uống buổi sáng"),
+        ("noon", "Integer", "1 byte", "Số lượng uống buổi trưa"),
+        ("afternoon", "Integer", "1 byte", "Số lượng uống buổi chiều"),
+        ("evening", "Integer", "1 byte", "Số lượng uống buổi tối"),
+        ("notes", "String", "255 ký tự", "Lời dặn riêng (uống trước ăn, uống sau ăn no)")
+    ]
+    tbl_pi = doc.add_table(rows=len(pi_fields), cols=4)
+    tbl_pi.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tbl_pi.columns[0].width = Inches(1.3)
+    tbl_pi.columns[1].width = Inches(1.1)
+    tbl_pi.columns[2].width = Inches(1.1)
+    tbl_pi.columns[3].width = Inches(3.0)
+    for idx, (f1, f2, f3, f4) in enumerate(pi_fields):
+        row = tbl_pi.rows[idx]
+        row.cells[0].text, row.cells[1].text, row.cells[2].text, row.cells[3].text = f1, f2, f3, f4
+        if idx == 0:
+            format_row(row, "0D9488", RGBColor(255, 255, 255), is_header=True)
+        else:
+            format_row(row, "FFFFFF" if idx % 2 == 1 else "F8FAFC", RGBColor(30, 41, 59))
+
+    # -------------------------------------------------------------------------
+    # 2.16 LỚP INVOICEITEM (CHI TIẾT KHOẢN MỤC HÓA ĐƠN)
+    # -------------------------------------------------------------------------
+    add_h2(doc, "2.16. Lớp InvoiceItem (Chi tiết Khoản thu Viện phí)")
+    p = doc.add_paragraph()
+    p.add_run("Lớp ").font.name = "Times New Roman"
+    p.add_run("InvoiceItem").font.bold = True
+    p.add_run(" bóc tách từng dòng chi phí cụ thể trên hóa đơn viện phí gồm tiền khám, từng loại cận lâm sàng và từng loại thuốc, làm căn cứ đối soát thu ngân.")
+
+    ii_fields = [
+        ("Tên thuộc tính", "Kiểu dữ liệu", "Kích thước", "Ý nghĩa và Ràng buộc"),
+        ("id", "Integer", "4 bytes", "Khóa chính tự tăng (PK)"),
+        ("invoice_id", "Integer", "4 bytes", "Khóa ngoại tham chiếu invoices.id"),
+        ("item_type", "String", "20 ký tự", "Phân loại khoản thu: CONSULTATION, SERVICE, MEDICINE"),
+        ("item_id", "Integer", "4 bytes", "ID tham chiếu tới dịch vụ hoặc thuốc"),
+        ("item_name", "String", "100 ký tự", "Tên hiển thị trên biên lai thanh toán"),
+        ("unit_price", "Decimal", "8 bytes", "Đơn giá tại thời điểm xuất hóa đơn"),
+        ("quantity", "Integer", "4 bytes", "Số lượng sử dụng"),
+        ("subtotal", "Decimal", "8 bytes", "Thành tiền trước giảm trừ (unit_price * quantity)")
+    ]
+    tbl_ii = doc.add_table(rows=len(ii_fields), cols=4)
+    tbl_ii.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tbl_ii.columns[0].width = Inches(1.3)
+    tbl_ii.columns[1].width = Inches(1.1)
+    tbl_ii.columns[2].width = Inches(1.1)
+    tbl_ii.columns[3].width = Inches(3.0)
+    for idx, (f1, f2, f3, f4) in enumerate(ii_fields):
+        row = tbl_ii.rows[idx]
+        row.cells[0].text, row.cells[1].text, row.cells[2].text, row.cells[3].text = f1, f2, f3, f4
+        if idx == 0:
+            format_row(row, "0D9488", RGBColor(255, 255, 255), is_header=True)
+        else:
+            format_row(row, "FFFFFF" if idx % 2 == 1 else "F8FAFC", RGBColor(30, 41, 59))
+
+    # -------------------------------------------------------------------------
+    # 2.17 LỚP AUDITLOG (NHẬT KÝ KIỂM TOÁN HỆ THỐNG)
+    # -------------------------------------------------------------------------
+    add_h2(doc, "2.17. Lớp AuditLog (Nhật ký Kiểm toán & An ninh)")
+    p = doc.add_paragraph()
+    p.add_run("Lớp ").font.name = "Times New Roman"
+    p.add_run("AuditLog").font.bold = True
+    p.add_run(" ghi nhận bất biến các thao tác truy cập dữ liệu nhạy cảm, đăng nhập và các sự kiện gọi dịch vụ AI theo quy định bảo vệ dữ liệu cá nhân Nghị định 13/2023/NĐ-CP.")
+
+    al_fields = [
+        ("Tên thuộc tính", "Kiểu dữ liệu", "Kích thước", "Ý nghĩa và Ràng buộc"),
+        ("id", "Integer", "4 bytes", "Khóa chính tự tăng (PK)"),
+        ("user_id", "Integer", "4 bytes", "Khóa ngoại tham chiếu users.id người thực hiện"),
+        ("action", "String", "50 ký tự", "Hành động thực hiện (LOGIN, VIEW_EMR, CALL_AI, PAY)"),
+        ("resource", "String", "100 ký tự", "Tài nguyên bị tác động (bệnh nhân 104, hóa đơn 55)"),
+        ("ip_address", "String", "45 ký tự", "Địa chỉ IPv4/IPv6 của máy trạm Client gửi yêu cầu"),
+        ("timestamp", "DateTime", "8 bytes", "Thời gian chính xác xảy ra sự kiện"),
+        ("payload_hash", "String", "64 ký tự", "Mã băm SHA-256 bảo đảm tính toàn vẹn của bản ghi")
+    ]
+    tbl_al = doc.add_table(rows=len(al_fields), cols=4)
+    tbl_al.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tbl_al.columns[0].width = Inches(1.3)
+    tbl_al.columns[1].width = Inches(1.1)
+    tbl_al.columns[2].width = Inches(1.1)
+    tbl_al.columns[3].width = Inches(3.0)
+    for idx, (f1, f2, f3, f4) in enumerate(al_fields):
+        row = tbl_al.rows[idx]
+        row.cells[0].text, row.cells[1].text, row.cells[2].text, row.cells[3].text = f1, f2, f3, f4
+        if idx == 0:
+            format_row(row, "0D9488", RGBColor(255, 255, 255), is_header=True)
+        else:
+            format_row(row, "FFFFFF" if idx % 2 == 1 else "F8FAFC", RGBColor(30, 41, 59))
+
+    # -------------------------------------------------------------------------
+    # 2.18 LỚP PIIANONYMIZER (TIỆN ÍCH BẢO MẬT KHỬ ĐỊNH DANH PII)
+    # -------------------------------------------------------------------------
+    add_h2(doc, "2.18. Lớp PIIAnonymizer (Tầng Bảo vệ Dữ liệu Cá nhân Y tế L1)")
+    p = doc.add_paragraph()
+    p.add_run("Lớp tiện ích ").font.name = "Times New Roman"
+    p.add_run("PIIAnonymizer").font.bold = True
+    p.add_run(" thực hiện rà quét và che giấu toàn bộ dữ liệu định danh nhạy cảm (Số CCCD, Số điện thoại, Mã thẻ BHYT, Họ tên bệnh nhân) bằng thuật toán Regex trước khi gửi bất kỳ văn bản nào ra dịch vụ đám mây LLM bên ngoài.")
+
+    add_method_spec(
+        doc,
+        name="mask_pii_data",
+        desc="Khử định danh các trường dữ liệu cá nhân theo mẫu chuẩn: CCCD chuyển thành [CCCD_REDACTED], SĐT thành [PHONE_REDACTED].",
+        inputs="raw_text: String (Văn bản chứa thông tin bệnh án thô).",
+        output="sanitized_text: String (Văn bản đã che chắn toàn bộ dữ liệu định danh nhạy cảm).",
+        flow="1. Quét biểu thức chính quy số CCCD (12 chữ số) và thay bằng nhãn an toàn.\\n2. Quét biểu thức chính quy số điện thoại di động (10 chữ số) và che dấu.\\n3. Quét mã thẻ BHYT (15 ký tự chữ và số) và che dấu.\\n4. Trả về văn bản an toàn tuân thủ Nghị định 13/2023/NĐ-CP.",
+        start_cond="Trước khi kích hoạt bất kỳ yêu cầu gửi prompt nào tới API AI.",
+        end_cond="Đảm bảo 0% rò rỉ dữ liệu cá nhân y tế ra Internet."
+    )
+
+    # -------------------------------------------------------------------------
+    # 2.19 LỚP ADMINAIGUARDRAILS (RÀO CHẮN ĐẠO ĐỨC Y TẾ L2)
+    # -------------------------------------------------------------------------
+    add_h2(doc, "2.19. Lớp AdminAIGuardrails (Rào chắn Đạo đức Y tế L2)")
+    p = doc.add_paragraph()
+    p.add_run("Lớp kiểm soát ").font.name = "Times New Roman"
+    p.add_run("AdminAIGuardrails").font.bold = True
+    p.add_run(" đóng vai trò người gác cổng an toàn đạo đức y tế, ngăn ngừa các kỹ thuật Prompt Injection, từ chối trả lời câu hỏi tự chẩn đoán bệnh học và tự động gắn Medical Disclaimer vào mọi phản hồi do AI sinh ra.")
+
+    add_method_spec(
+        doc,
+        name="is_medical_diagnosis_query",
+        desc="Kiểm tra câu hỏi của người dùng có chứa yêu cầu AI tự chẩn đoán bệnh hoặc kê đơn thuốc hay không.",
+        inputs="question: String (Nội dung câu hỏi người dùng nhập vào Chatbot).",
+        output="is_diagnosis: Boolean (True nếu là câu hỏi chẩn đoán bệnh tật, False nếu là hỏi đáp thủ tục hành chính).",
+        flow="1. Phân tích ngữ nghĩa và từ khóa chuyên môn (đau ngực, uống thuốc gì, chẩn đoán bệnh gì).\\n2. Nếu phát hiện câu hỏi can thiệp lâm sàng, trả về True để hệ thống chặn ngay lập tức.\\n3. Nếu là câu hỏi hành chính (giờ mở cửa, thẻ BHYT), trả về False cho phép RAG xử lý.",
+        start_cond="Nhận câu hỏi từ cửa sổ Chatbot.",
+        end_cond="Ngăn chặn hành vi AI hành nghề y trái phép."
+    )
+
     # =========================================================================
-    add_h1(doc, "3. BẢNG TỔNG HỢP & MA TRẬN ÁNH XẠ THIẾT KẾ HƯỚNG ĐỐI TƯỢNG")
+    # MỤC 3: MÔ HÌNH TƯƠNG TÁC TUẦN TỰ (SEQUENCE DIAGRAMS)
+    # =========================================================================
+    add_h1(doc, "3. MÔ HÌNH TƯƠNG TÁC TUẦN TỰ (SEQUENCE DIAGRAMS)")
+    p = doc.add_paragraph()
+    p.add_run("Để mô tả động thái tương tác giữa các đối tượng theo trục thời gian trong các kịch bản nghiệp vụ phức tạp, hệ thống CMS-AI thiết kế 3 biểu đồ trình tự (Sequence Diagram) chuẩn UML chi tiết:")
+
+    # 3.1 Sequence Đặt lịch
+    add_h2(doc, "3.1. Biểu đồ trình tự: Đặt lịch khám và Kiểm tra xung đột thời gian thực")
+    p = doc.add_paragraph()
+    p.add_run("Biểu đồ mô tả quy trình tương tác giữa giao diện người dùng, Controller tiếp nhận yêu cầu, thuật toán cốt lõi ")
+    p.add_run("ConflictChecker").font.bold = True
+    p.add_run(" và CSDL PostgreSQL để kiểm soát giao thoa thời gian khám, ngăn chặn trùng lịch bác sĩ:")
+    
+    seq1_img = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "generated_diagrams", "diagram_sequence_scheduling.png"))
+    add_diagram(doc, seq1_img, "Hình 3.1: Biểu đồ trình tự Đặt lịch khám và Thuật toán kiểm tra xung đột thời gian thực (300 DPI)", width=Inches(6.4))
+
+    # 3.2 Sequence Khám EMR và AI
+    add_h2(doc, "3.2. Biểu đồ trình tự: Khám bệnh EMR và Trợ lý AI Hành chính 3 lớp")
+    p = doc.add_paragraph()
+    p.add_run("Biểu đồ mô tả quy trình phối hợp khép kín giữa Bác sĩ khám lâm sàng, tầng khử định danh PII ")
+    p.add_run("PIIAnonymizer").font.bold = True
+    p.add_run(", rào chắn đạo đức y tế ")
+    p.add_run("AdminAIGuardrails").font.bold = True
+    p.add_run(" và mô hình ngôn ngữ lớn Google Gemini Live API:")
+
+    seq2_img = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "generated_diagrams", "diagram_sequence_ai_consultation.png"))
+    add_diagram(doc, seq2_img, "Hình 3.2: Biểu đồ trình tự Khám bệnh EMR, Khử định danh PII và Trợ lý AI Gemini (300 DPI)", width=Inches(6.4))
+
+    # 3.3 Sequence Viện phí VietQR
+    add_h2(doc, "3.3. Biểu đồ trình tự: Tính toán viện phí, Khấu trừ BHYT và Thanh toán VietQR")
+    p = doc.add_paragraph()
+    p.add_run("Biểu đồ mô tả quy trình thu ngân: tiếp nhận hồ sơ khám hoàn thành, tính toán quyền lợi giảm trừ BHYT tự động, gọi dịch vụ sinh mã VietQR chuẩn NAPAS 247 và cập nhật kho dược phẩm:")
+
+    seq3_img = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "generated_diagrams", "diagram_sequence_billing_vietqr.png"))
+    add_diagram(doc, seq3_img, "Hình 3.3: Biểu đồ trình tự Tính toán viện phí, Giảm trừ BHYT và Sinh mã VietQR (300 DPI)", width=Inches(6.4))
+
+    # =========================================================================
+    # MỤC 4: BẢNG TỔNG HỢP & MA TRẬN ÁNH XẠ ĐÁP ỨNG QUY TRÌNH HƯỚNG ĐỐI TƯỢNG
+    # =========================================================================
+    add_h1(doc, "4. BẢNG TỔNG HỢP & MA TRẬN ÁNH XẠ THIẾT KẾ HƯỚNG ĐỐI TƯỢNG")
     p = doc.add_paragraph()
     p.add_run("Bảng ma trận phân tầng trách nhiệm và mối liên kết giữa các lớp nghiệp vụ trong hệ thống:")
     
     matrix_data = [
         ("Tên Lớp", "Trách nhiệm chính trong hệ thống", "Phân tầng kiến trúc", "Mối quan hệ chính"),
-        ("User", "Xác thực JWT, phân quyền 4 vai trò RBAC, băm mật khẩu bcrypt", "Persistence & Security", "User 1-1 Doctor"),
+        ("User", "Xác thực JWT, phân quyền 4 vai trò RBAC, băm mật khẩu bcrypt", "Persistence & Security", "User 1-1 Doctor, User 1-N AuditLog"),
+        ("AuditLog", "Nhật ký kiểm toán an ninh, lưu vết truy cập theo Nghị định 13", "Security Audit", "User 1-N AuditLog"),
+        ("Clinic", "Quản lý buồng khám vật lý, trạng thái hoạt động", "Domain Entity", "Specialty 1-N Clinic, Clinic 1-N Shift"),
+        ("Specialty", "Quản lý chuyên khoa y tế, phân loại chuyên môn khám chữa bệnh", "Domain Entity", "Specialty 1-N Doctor, Specialty 1-N Clinic"),
+        ("Doctor", "Quản lý hồ sơ bác sĩ, chứng chỉ hành nghề và giới hạn bệnh nhân", "Domain Entity", "User 1-1 Doctor, Doctor 1-N Shift"),
+        ("DoctorShift", "Phân ca trực bác sĩ theo ngày, ca sáng/chiều và buồng khám", "Domain Entity", "Doctor 1-N DoctorShift, Clinic 1-N DoctorShift"),
         ("Patient", "Quản lý hồ sơ nhân khẩu, tiền sử bệnh, dị ứng thuốc", "Domain Entity", "Patient 1-N Appointment, Patient 1-N MedicalRecord"),
-        ("Doctor", "Quản lý bác sĩ chuyên khoa, buồng khám và lịch trực", "Domain Entity", "Doctor 1-N Shift, Doctor 1-N Appointment"),
-        ("Appointment", "Quản lý lịch hẹn khám, kiểm soát trạng thái đặt lịch", "Domain Entity", "Appointment 1-1 MedicalRecord"),
-        ("ConflictChecker", "Thuật toán kiểm tra trùng lịch khám theo Interval Overlap", "Core Service", "Dependency tới Appointment & Shift"),
+        ("Appointment", "Quản lý lịch hẹn khám, kiểm soát trạng thái đặt lịch", "Domain Entity", "Appointment 1-1 MedicalRecord, Doctor 1-N Appointment"),
+        ("ConflictChecker", "Thuật toán kiểm tra trùng lịch khám theo Interval Overlap", "Core Math Service", "Dependency tới Appointment & Shift"),
         ("MedicalRecord", "Bệnh án điện tử EMR, sinh hiệu, chẩn đoán ICD-10", "Domain Entity", "MedicalRecord 1-N ServiceOrder, 1-1 Prescription"),
+        ("ServiceOrder", "Chỉ định dịch vụ kỹ thuật, xét nghiệm, chẩn đoán hình ảnh", "Domain Entity", "MedicalRecord 1-N ServiceOrder"),
         ("Prescription", "Đơn thuốc điều trị, lời dặn dùng thuốc của bác sĩ", "Domain Entity", "Prescription 1-N PrescriptionItem"),
-        ("Medicine", "Quản lý kho dược phẩm, theo dõi tồn kho và xuất nhập thuốc", "Domain Entity", "Medicine 1-N PrescriptionItem"),
-        ("Invoice", "Viện phí, khấu trừ BHYT, sinh mã thanh toán VietQR", "Financial Entity", "Invoice 1-1 MedicalRecord"),
+        ("PrescriptionItem", "Chi tiết từng loại thuốc, liều lượng uống sáng-trưa-chiều-tối", "Domain Entity", "Prescription 1-N PrescriptionItem, Medicine 1-N Item"),
+        ("Medicine", "Quản lý kho dược phẩm, theo dõi tồn kho và đơn giá bán", "Domain Entity", "Medicine 1-N PrescriptionItem"),
+        ("Invoice", "Viện phí, khấu trừ BHYT, sinh mã thanh toán VietQR", "Financial Entity", "Invoice 1-1 MedicalRecord, Invoice 1-N InvoiceItem"),
+        ("InvoiceItem", "Bóc tách chi tiết từng khoản thu viện phí trên biên lai", "Financial Entity", "Invoice 1-N InvoiceItem"),
         ("PIIAnonymizer", "Khử định danh PII (CCCD, SĐT, BHYT) theo Nghị định 13", "AI Security Utility", "Dependency tới AdminAIService"),
         ("AdminAIGuardrails", "Kiểm soát đạo đức y tế, chặn câu hỏi tự chẩn đoán", "AI Safety Guardrail", "Dependency tới AdminAIService"),
         ("AdminAIService", "Cung cấp 3 tính năng AI tóm tắt, hỏi đáp và dặn dò sau khám", "AI Application Service", "Tích hợp Gemini API & Mock Fallback Engine")
@@ -1171,21 +1518,8 @@ def build_docx():
     p_r.add_run("TRƯỞNG NHÓM 03\n(Ký và ghi rõ họ tên)\n\n\n\n").font.bold = True
     p_r.add_run("Đinh Gia Bảo\n(Architecture & AI Lead)").font.italic = True
 
-    # Lưu tài liệu vào các thư mục docs/, Desktop và 7_Giai_Doan_Hoan_Thien
-    out_paths = [
-        r"C:\Users\MSI\OneDrive\Desktop\CacGiaiDoanThucHien\04_GenAI_SoftwareDevelopment_object-oriented-design.docx",
-        r"d:\ICTU\Nam 3\ICTU_2026-2027\Ứng dụng trí tuệ nhân tạo - Project\He_thong_quan_ly_phong_kham\docs\7_Giai_Doan_Hoan_Thien\04_GenAI_SoftwareDevelopment_object-oriented-design.docx",
-        r"d:\ICTU\Nam 3\ICTU_2026-2027\Ứng dụng trí tuệ nhân tạo - Project\He_thong_quan_ly_phong_kham\docs\Tai_Lieu_Thiet_Ke_Huong_Doi_Tuong_Nhom_07.docx",
-        r"d:\ICTU\Nam 3\ICTU_2026-2027\Ứng dụng trí tuệ nhân tạo - Project\He_thong_quan_ly_phong_kham\docs\Reports\Tai_Lieu_Thiet_Ke_Huong_Doi_Tuong_Nhom_07.docx"
-    ]
-    
-    for p in out_paths:
-        os.makedirs(os.path.dirname(p), exist_ok=True)
-        try:
-            doc.save(p)
-            print(f"-> Đã lưu thành công: {os.path.basename(p)}")
-        except PermissionError:
-            print(f"! Cảnh báo: Tệp {os.path.basename(p)} đang mở trong Word, bỏ qua việc ghi đè lần này.")
+    # Lưu tài liệu chuẩn hóa vào cả 2 thư mục dự án
+    save_document(doc, "04_GenAI_SoftwareDevelopment_object-oriented-design.docx")
 
 if __name__ == "__main__":
     build_docx()

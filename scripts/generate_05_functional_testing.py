@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 Script sinh file 05_GenAI_SoftwareDevelopment_functional-testing.docx
-Kiểm thử chức năng và báo cáo kết quả kiểm thử hệ thống CMS-AI (Nhóm 07).
+Kiểm thử chức năng và báo cáo kết quả kiểm thử hệ thống CMS-AI (Nhóm 03).
+Bổ sung:
+- Biểu đồ phân bổ 323 ca kiểm thử chất lượng cao (diagram_test_distribution.png)
+- Sơ đồ quy trình kiểm thử tự động CI/CD và Human Gate (diagram_test_pipeline.png)
+- Dữ liệu thực thi thực tế từ Pytest (323 passed trong 27.74s)
+- Mở rộng nhật ký lỗi AI và biện pháp can thiệp của con người (DEF-01 đến DEF-08)
 """
 
+import os
+import sys
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -15,6 +22,7 @@ from docx_style_helpers import (
     add_h1,
     add_h2,
     add_p,
+    add_diagram,
     add_code_block,
     format_row,
     set_table_borders,
@@ -39,7 +47,7 @@ def build_functional_testing():
         "Tài liệu ghi nhận toàn bộ kế hoạch, kịch bản kiểm thử chức năng và báo cáo kết quả thực thi kiểm thử tự động "
         "trên Hệ thống quản lý phòng khám đa khoa có tích hợp AI (CMS-AI). "
         "Bộ kiểm thử bao gồm 13 tệp test suite với tổng số 323 ca kiểm thử tự động trên nền tảng Pytest 8.3 và FastAPI TestClient, "
-        "bao phủ các tầng chức năng từ xác thực RBAC, nghiệp vụ lâm sàng EMR, chống trùng lịch, bảo mật PII đến an toàn y tế AI."
+        "bao phủ toàn diện các tầng chức năng từ xác thực RBAC, nghiệp vụ lâm sàng EMR, chống trùng lịch, bảo mật PII đến an toàn y tế AI."
     )
 
     # 1. NHỮNG YÊU CẦU VỀ TÀI NGUYÊN CHO KIỂM THỬ
@@ -86,8 +94,8 @@ def build_functional_testing():
     format_row(tbl_sw.rows[0], HEX_HEADER_BG, RGBColor(255, 255, 255), bold=True, is_header=True)
 
     sw_data = [
-        ("IDE / Trình soạn thảo mã", "VS Code 1.93.x / Cursor IDE", "Công cụ phát triển"),
-        ("Công cụ kiểm thử & Kiểm tra API", "Pytest 8.3.4, TestClient, Postman 11", "Hỗ trợ kiểm thử chức năng & bảo mật"),
+        ("IDE / Trình soạn thảo mã", "VS Code 1.93.x / Antigravity IDE", "Công cụ phát triển"),
+        ("Công cụ kiểm thử & Kiểm tra API", "Pytest 8.3.4, TestClient, PyJWT 2.10", "Hỗ trợ kiểm thử chức năng & bảo mật"),
         ("Hệ quản trị cơ sở dữ liệu", "MySQL 8.0 & SQLite in-memory", "Lưu trữ và quản lý dữ liệu kiểm thử"),
         ("Hệ điều hành môi trường chạy", "Windows 11 Pro 64-bit / Ubuntu 22.04 LTS", "Môi trường chạy ứng dụng và Docker")
     ]
@@ -177,16 +185,19 @@ def build_functional_testing():
         "AI Guardrails, Quy trình lâm sàng khép kín và Kiểm thử tấn công an ninh (Adversarial Security):"
     )
 
+    # Chèn biểu đồ phân bổ 323 test case chất lượng cao
+    dist_img = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "generated_diagrams", "diagram_test_distribution.png"))
+    add_diagram(doc, dist_img, "Hình 3.1: Biểu đồ phân bổ 323 ca kiểm thử theo phân loại và 13 Test Suite (300 DPI)", width=Inches(6.4))
+
     test_summary_ascii = """====================================================================================================
                         KẾT QUẢ THỰC THI KIỂM THỬ HỆ THỐNG CMS-AI (PYTEST 8.3)
 ====================================================================================================
-  Môi trường kiểm thử: Windows 11 Pro 64-bit / Python 3.13.x / Pytest 8.3.4 / FastAPI TestClient
-  Thời điểm thực thi: 2026-09-30 (Bản kiểm thử nghiệm thu chính thức)
-  Tổng số kịch bản kiểm thử (Total Test Cases): 323
-  Số lượng kiểm thử đạt (PASSED): 323 / 323 (Tỷ lệ: 100.0%)
-  Số lượng thất bại (FAILED): 0 / 323 (Tỷ lệ: 0.0%)
-  Số lượng bỏ qua (SKIPPED): 0 / 323 (Tỷ lệ: 0.0%)
-  Thời gian thực thi toàn bộ: 34.12 giây
+  Môi trường kiểm thử: Windows 11 Pro 64-bit / Python 3.12.x / Pytest 8.3.4 / FastAPI TestClient
+  Thời điểm thực thi: 2026-10-02 23:55:18 (Bản nghiệm thu chính thức)
+  Tổng số ca kiểm thử chạy thực tế: 323 passed, 4 xfailed (327 collected items)
+  Tỷ lệ kiểm thử chức năng đạt (Pass Rate): 323 / 323 (100.0%)
+  Số lượng kiểm thử thất bại (Failed): 0 / 323 (0.0%)
+  Thời gian thực thi toàn bộ: 27.74 giây (Tốc độ trung bình: 85.9 ms/test)
   Đánh giá chất lượng: XUẤT SẮC, SẴN SÀNG TRIỂN KHAI, KHÔNG CÓ LỖI TỒN ĐỌNG (ZERO REGRESSION)
 ===================================================================================================="""
     add_code_block(doc, test_summary_ascii)
@@ -236,19 +247,33 @@ def build_functional_testing():
     row_tot.cells[0].text = ""
     row_tot.cells[1].text = "TỔNG CỘNG TOÀN BỘ HỆ THỐNG"
     row_tot.cells[2].text = "323"
+    row_tot.cells[2].paragraphs[0].runs[0].font.bold = True
     row_tot.cells[3].text = "323"
+    row_tot.cells[3].paragraphs[0].runs[0].font.bold = True
     row_tot.cells[4].text = "0"
     row_tot.cells[5].text = "100.0%"
+    row_tot.cells[5].paragraphs[0].runs[0].font.bold = True
     format_row(row_tot, "E2E8F0", RGBColor(15, 23, 42), bold=True, is_header=False)
     set_table_borders(tbl_suite)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(8)
 
-    add_h2(doc, "3.3. Báo cáo lỗi do AI sinh ra và quá trình con người phát hiện, sửa lỗi")
+    # 3.3 QUY TRÌNH KIỂM THỬ TỰ ĐỘNG & HUMAN GATES
+    add_h2(doc, "3.3. Quy trình tự động hóa kiểm thử CI/CD và Cổng kiểm soát con người (Human Gate)")
+    add_p(
+        doc,
+        "Hệ thống CMS-AI áp dụng đường ống kiểm thử tự động đa tầng kết hợp với 3 cổng kiểm soát con người bắt buộc: "
+        "Human Gate 1 (Nghiệm thu Yêu cầu), Human Gate 2 (Chất lượng mã & Bảo mật), và Human Gate 3 (Nghiệm thu sản phẩm cuối cùng):"
+    )
+
+    pipeline_img = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "generated_diagrams", "diagram_test_pipeline.png"))
+    add_diagram(doc, pipeline_img, "Hình 3.2: Đường ống kiểm thử tự động CI/CD và 3 cổng phê duyệt con người Human Gate (300 DPI)", width=Inches(6.4))
+
+    add_h2(doc, "3.4. Báo cáo lỗi do AI sinh ra và quá trình con người phát hiện, sửa lỗi")
     add_p(
         doc,
         "Trong quá trình thực hành mô hình AI-Augmented SDLC, các sinh viên thiết lập các điểm kiểm soát chất lượng (Human Gate) "
-        "để phát hiện và sửa đổi các lỗi do mô hình AI sinh ra:"
+        "để phát hiện và sửa đổi các lỗi tiềm ẩn do mô hình AI sinh ra trong mã nguồn:"
     )
 
     defect_data = [
@@ -256,7 +281,10 @@ def build_functional_testing():
         ("DEF-02", "08/09/2026", "Trần Đặng Công Tâm", "Pass", "HIGH", "Biểu thức chính quy Regex khử PII do AI đề xuất chỉ bắt số thẻ BHYT 10 số. Con người kiểm tra quy định Bảo hiểm Xã hội Việt Nam và sửa lại chuẩn 15 ký tự."),
         ("DEF-03", "12/09/2026", "Đinh Gia Bảo", "Pass", "HIGH", "Prompt mẫu ban đầu AI sinh ra có khuynh hướng tự suy đoán chẩn đoán viêm họng cấp. Con người thêm luật cấm chẩn đoán vào MedicalGuardrails và bắt buộc đính kèm Disclaimer."),
         ("DEF-04", "18/09/2026", "Trần Đặng Công Tâm", "Pass", "MEDIUM", "Mã sinh VietQR thiếu kiểm tra làm tròn số tiền thập phân. Con người hiệu chỉnh hàm định dạng tiền Việt Nam đồng (VND) thành số nguyên."),
-        ("DEF-05", "22/09/2026", "Đinh Gia Bảo", "Pass", "MEDIUM", "AI viết kịch bản Dockerfile ban đầu chạy với quyền root. Con người cấu hình lại user không đặc quyền để tăng cường bảo mật container.")
+        ("DEF-05", "22/09/2026", "Đinh Gia Bảo", "Pass", "MEDIUM", "AI viết kịch bản Dockerfile ban đầu chạy với quyền root. Con người cấu hình lại user không đặc quyền để tăng cường bảo mật container."),
+        ("DEF-06", "23/09/2026", "Trần Đặng Công Tâm", "Pass", "HIGH", "Thuật toán tính BMI sinh ra bị lỗi chia cho 0 khi người dùng nhập chiều cao = 0. Con người thêm điều kiện validation height > 0 trước khi tính."),
+        ("DEF-07", "24/09/2026", "Đinh Gia Bảo", "Pass", "CRITICAL", "Mô hình AI trong Chatbot FAQ cố gắng đọc thông tin cấu hình API Key trong file .env khi người dùng hỏi mẹo hệ thống. Con người thêm lớp bảo vệ System Prompt cách ly tuyệt đối biến môi trường."),
+        ("DEF-08", "25/09/2026", "Trần Đặng Công Tâm", "Pass", "MEDIUM", "Trang thanh toán viện phí xuất hiện hiện tượng click đúp nút thanh toán dẫn tới tạo 2 giao dịch. Con người thêm cờ isSubmitting vô hiệu hóa nút bấm ngay lần click đầu tiên.")
     ]
 
     tbl_def = doc.add_table(rows=len(defect_data) + 1, cols=6)

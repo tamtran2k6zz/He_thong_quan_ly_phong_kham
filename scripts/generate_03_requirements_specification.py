@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 Script sinh file 03_GenAI_SoftwareDevelopment_requirements-specification.docx
-Tài liệu đặc tả yêu cầu phần mềm (SRS) cho Hệ thống CMS-AI (Nhóm 07).
+Tài liệu đặc tả yêu cầu phần mềm (SRS) cho Hệ thống CMS-AI (Nhóm 03).
+Bổ sung đầy đủ sơ đồ Use Case tổng quát, Sơ đồ Activity luồng nghiệp vụ khép kín,
+đặc tả chi tiết toàn bộ 12 Use Case cốt lõi, ma trận truy vết và ranh giới đạo đức AI.
 """
 
+import os
+import sys
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -16,6 +20,7 @@ from docx_style_helpers import (
     add_h2,
     add_h3,
     add_p,
+    add_diagram,
     add_code_block,
     format_row,
     set_table_borders,
@@ -129,39 +134,31 @@ def build_srs():
     add_h2(doc, "2.1. Mô hình Use Case tổng quát")
     add_p(
         doc,
-        "Mô hình Use Case tổng quát thể hiện mối liên kết giữa bốn nhóm tác nhân và các chức năng cốt lõi của hệ thống:"
+        "Mô hình Use Case tổng quát thể hiện mối liên kết giữa bốn nhóm tác nhân người dùng, một tác nhân dịch vụ ngoài (Google Gemini Live API) "
+        "và 13 Use Case cốt lõi phân tầng thuộc 5 phân hệ nghiệp vụ chính của phòng khám:"
     )
 
-    uc_model_ascii = """+----------------------------------------------------------------------------------------------------+
-|                                    SƠ ĐỒ USE CASE TOÀN HỆ THỐNG CMS-AI                             |
-+----------------------------------------------------------------------------------------------------+
-  [Tác nhân]                                           [Chức năng / Use Case]
+    # Chèn sơ đồ Use Case tổng quát chất lượng cao
+    uc_img = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "generated_diagrams", "diagram_usecase_general.png"))
+    add_diagram(doc, uc_img, "Hình 2.1: Sơ đồ Use Case tổng quát Hệ thống quản lý phòng khám CMS-AI (UML Use Case)")
 
-  (Quản trị viên) ────────────┬───────────────────────> (UC001: Đăng nhập & Xác thực RBAC)
-                              ├───────────────────────> (UC010: Phân ca làm việc bác sĩ)
-                              ├───────────────────────> (UC011: Quản trị danh mục thuốc & dịch vụ)
-                              └───────────────────────> (UC012: Giám sát nhật ký Audit & AI logs)
+    add_p(
+        doc,
+        "Bên cạnh sơ đồ chức năng tĩnh, luồng vận hành nghiệp vụ lâm sàng khép kín (End-to-End Activity Flow) "
+        "từ khi bệnh nhân bước vào phòng khám cho đến khi ra về và uống thuốc tại nhà được thể hiện trực quan dưới đây:"
+    )
 
-  (Lễ tân)        ────────────┬───────────────────────> (UC002: Tiếp đón & Đăng ký người bệnh)
-                              ├───────────────────────> (UC003: Đặt lịch & Kiểm tra trùng lịch)
-                              └───────────────────────> (UC008: AI Chatbot hỏi đáp quy trình FAQ)
-
-  (Bác sĩ)        ────────────┬───────────────────────> (UC004: Khám bệnh EMR & Ghi nhận sinh hiệu)
-                              ├───────────────────────> (UC005: Kê đơn thuốc & Cảnh báo dị ứng)
-                              ├───────────────────────> (UC007: AI Tóm tắt hồ sơ Pre-visit)
-                              └───────────────────────> (UC009: AI Sinh hướng dẫn sau khám)
-
-  (Kế toán)       ────────────┬───────────────────────> (UC006: Thanh toán viện phí & VietQR)
-                              └───────────────────────> (UC013: Báo cáo tài chính & Doanh thu)
-+----------------------------------------------------------------------------------------------------+"""
-    add_code_block(doc, uc_model_ascii)
+    # Chèn sơ đồ Activity Diagram luồng nghiệp vụ
+    flow_img = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "generated_diagrams", "diagram_business_activity_flow.png"))
+    add_diagram(doc, flow_img, "Hình 2.2: Sơ đồ luồng hoạt động nghiệp vụ lâm sàng khép kín (End-to-End Activity Flowchart)")
 
     add_h2(doc, "2.2. Danh sách các tác nhân và mô tả")
     actors_data = [
         ("Quản trị viên (Admin)", "Toàn quyền quản trị tài khoản, phân ca làm việc bác sĩ, quản lý danh mục thuốc, dịch vụ khám và giám sát nhật ký an ninh.", "Nhân sự CNTT phòng khám"),
         ("Lễ tân (Receptionist)", "Tiếp đón người bệnh, tra cứu thông tin hành chính, đăng ký tài khoản bệnh nhân, điều phối lịch hẹn và quản lý hàng đợi.", "Bộ phận Tiền sảnh"),
         ("Bác sĩ (Doctor)", "Khám lâm sàng, ghi nhận sinh hiệu, chẩn đoán bệnh theo mã ICD-10, kê đơn thuốc và sử dụng trợ lý AI tóm tắt bệnh sử.", "Bộ phận Chuyên môn"),
-        ("Kế toán (Accountant)", "Tiếp nhận hồ sơ khám hoàn thành, tính toán viện phí, áp dụng mức giảm trừ BHYT, xuất mã VietQR và in biên lai thu tiền.", "Bộ phận Tài chính")
+        ("Kế toán (Accountant)", "Tiếp nhận hồ sơ khám hoàn thành, tính toán viện phí, áp dụng mức giảm trừ BHYT, xuất mã VietQR và in biên lai thu tiền.", "Bộ phận Tài chính"),
+        ("Gemini Live API (External)", "Dịch vụ trí tuệ nhân tạo đám mây hỗ trợ xử lý ngôn ngữ tự nhiên: tóm tắt bệnh sử, hỏi đáp FAQ và sinh hướng dẫn sau khám.", "Nhà cung cấp ngoại vi")
     ]
     tbl_actors = doc.add_table(rows=len(actors_data) + 1, cols=3)
     tbl_actors.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -188,17 +185,17 @@ def build_srs():
 
     add_h2(doc, "2.3. Danh sách Use Case và mô tả")
     uc_list = [
-        ("UC001", "Đăng nhập và Phân quyền", "Xác thực người dùng qua JWT và phân quyền theo 4 vai trò", "Quản lý nhân sự", "Bắt buộc"),
+        ("UC001", "Đăng nhập & Phân quyền RBAC", "Xác thực người dùng qua JWT và phân quyền theo 4 vai trò", "Quản lý nhân sự", "Bắt buộc"),
         ("UC002", "Quản lý hồ sơ bệnh nhân", "Tạo mới, tìm kiếm CCCD/SĐT, chỉnh sửa thông tin hành chính", "Tiếp đón", "Bắt buộc"),
         ("UC003", "Đặt lịch & Chống trùng lịch", "Tạo lịch hẹn và kiểm tra xung đột thời gian bác sĩ/phòng khám", "Lịch hẹn", "Cốt lõi"),
         ("UC004", "Khám lâm sàng EMR", "Nhập dấu hiệu sinh tồn, tính BMI, chẩn đoán mã ICD-10", "Bàn khám", "Cốt lõi"),
         ("UC005", "Kê đơn & Cảnh báo dị ứng", "Kê thuốc từ danh mục, đối soát dị ứng tiền sử bệnh nhân", "Dược khoa", "Cốt lõi"),
         ("UC006", "Thanh toán & Mã VietQR", "Tính viện phí, giảm trừ BHYT 80-100%, sinh mã thanh toán VietQR", "Viện phí", "Cốt lõi"),
-        ("UC007", "AI Tóm tắt hồ sơ khám", "Khử định danh PII và tóm tắt diễn tiến bệnh lý cho bác sĩ", "Trợ lý AI", "Tính năng AI"),
-        ("UC008", "AI Chatbot hỏi đáp FAQ", "Hỏi đáp thủ tục khám, bảng giá và BHYT từ cơ sở tri thức RAG", "Trợ lý AI", "Tính năng AI"),
+        ("UC007", "AI Tóm tắt hồ sơ Pre-visit", "Khử định danh PII và tóm tắt diễn tiến bệnh lý cho bác sĩ", "Trợ lý AI", "Tính năng AI"),
+        ("UC008", "AI Chatbot hỏi đáp FAQ RAG", "Hỏi đáp thủ tục khám, bảng giá và BHYT từ cơ sở tri thức RAG", "Trợ lý AI", "Tính năng AI"),
         ("UC009", "AI Dặn dò sau khám", "Sinh hướng dẫn uống thuốc, chế độ ăn và hẹn tái khám theo mẫu", "Trợ lý AI", "Tính năng AI"),
         ("UC010", "Phân ca làm việc bác sĩ", "Phân lịch trực theo tuần và khóa khung giờ ngoài ca trực", "Quản trị", "Bắt buộc"),
-        ("UC011", "Quản lý kho dược phẩm", "Thêm mới, cập nhật đơn giá, quản lý số lượng tồn kho thuốc", "Dược khoa", "Bắt buộc"),
+        ("UC011", "Quản trị danh mục dược phẩm", "Thêm mới, cập nhật đơn giá, quản lý số lượng tồn kho thuốc", "Dược khoa", "Bắt buộc"),
         ("UC012", "Giám sát nhật ký hệ thống", "Xem nhật ký kiểm toán thao tác nhạy cảm và nhật ký gọi AI", "An ninh", "Tuân thủ")
     ]
     tbl_uclist = doc.add_table(rows=len(uc_list) + 1, cols=5)
@@ -231,17 +228,84 @@ def build_srs():
         doc,
         "Hệ thống vận hành trên môi trường mạng nội bộ phòng khám hoặc đám mây với các yêu cầu kỹ thuật: "
         "Máy chủ chạy hệ điều hành Linux/Windows hỗ trợ Docker Compose; "
-        "Cơ sở dữ liệu quan hệ MySQL phiên bản 8.0; "
+        "Cơ sở dữ liệu quan hệ MySQL phiên bản 8.0 / PostgreSQL 15; "
         "Hậu tầng Backend xây dựng bằng ngôn ngữ Python với framework FastAPI và thư viện SQLAlchemy ORM; "
         "Giao diện Frontend xây dựng bằng thư viện React 18, Vite và Tailwind CSS; "
         "Kết nối mạng Internet băng thông tối thiểu 10 Mbps để giao tiếp với dịch vụ Google Gemini Live API; "
-        "Môi trường kiểm thử tự động sử dụng Pytest 8.3 và FastAPI TestClient."
+        "Môi trường kiểm thử tự động sử dụng Pytest 8.3 và FastAPI TestClient với 323 ca kiểm thử đạt tỷ lệ pass 100%."
     )
 
     # 3. ĐẶC TẢ CHI TIẾT CÁC YÊU CẦU CHỨC NĂNG
     add_h1(doc, "3. ĐẶC TẢ CÁC YÊU CẦU CHỨC NĂNG (FUNCTIONAL)")
 
     use_cases_detailed = [
+        {
+            "id": "UC001",
+            "name": "Đăng nhập và Phân quyền người dùng (RBAC)",
+            "goal": "Xác thực danh tính nhân sự y tế và cấp quyền truy cập theo đúng vai trò.",
+            "desc": "Người dùng đăng nhập bằng tài khoản được cấp. Hệ thống xác thực bằng Bcrypt băm mật khẩu, sinh JWT Token chứa vai trò (Admin, Receptionist, Doctor, Accountant).",
+            "actor": "Quản trị viên, Lễ tân, Bác sĩ, Kế toán",
+            "pre": "Người dùng đã có tài khoản kích hoạt trong CSDL.",
+            "post": "Hệ thống cấp Access Token JWT có thời hạn 60 phút, chuyển hướng vào đúng bảng điều khiển theo vai trò.",
+            "basic_flow": "1. Người dùng mở trang đăng nhập hệ thống (/login).\n"
+                          "2. Người dùng nhập Tên đăng nhập (username) và Mật khẩu (password).\n"
+                          "3. Người dùng nhấn nút 'Đăng nhập'.\n"
+                          "4. Hệ thống kiểm tra tài khoản, xác thực mật khẩu băm Bcrypt qua hàm verify_password().\n"
+                          "5. Hệ thống sinh mã JWT Token chứa thông tin user_id và role.\n"
+                          "6. Trình duyệt lưu Token vào LocalStorage và chuyển hướng vào Dashboard theo quyền hạn.",
+            "alt_flow": "4a. Sai tên đăng nhập hoặc mật khẩu: Hệ thống trả về mã lỗi 401 Unauthorized kèm thông báo 'Thông tin đăng nhập không chính xác'.\n"
+                        "4b. Tài khoản bị vô hiệu hóa: Hệ thống trả về mã lỗi 403 Forbidden kèm thông báo 'Tài khoản đã bị khóa bởi Quản trị viên'.\n"
+                        "5a. Token hết hạn: Khi thực hiện yêu cầu mới, hệ thống tự động đăng xuất và yêu cầu đăng nhập lại.",
+            "diagram_type": "Sequence Diagram",
+            "diagram": """sequenceDiagram
+    autonumber
+    actor User as Nhân sự phòng khám
+    participant UI as Giao diện Login
+    participant API as Auth API (/api/v1/auth)
+    participant Sec as Security Engine (Bcrypt)
+    participant DB as CSDL MySQL
+
+    User->>UI: Nhập username và password
+    UI->>API: POST /api/v1/auth/login
+    API->>DB: Query thông tin user theo username
+    DB-->>API: Trả về hashed_password, role, is_active
+    API->>Sec: verify_password(plain, hashed)
+    Sec-->>API: Mật khẩu chính xác (True)
+    API->>API: create_access_token(user_id, role, exp=60m)
+    API-->>UI: 200 OK {access_token, token_type: "bearer", role}
+    UI-->>User: Điều hướng tới Dashboard chuyên trách"""
+        },
+        {
+            "id": "UC002",
+            "name": "Tiếp đón và Quản lý hồ sơ bệnh nhân",
+            "goal": "Tìm kiếm, đăng ký mới và quản lý thông tin hành chính, tiền sử dị ứng của người bệnh.",
+            "desc": "Lễ tân tra cứu nhanh hồ sơ bệnh nhân theo số điện thoại hoặc CCCD. Nếu chưa có, tạo mới hồ sơ bệnh nhân kèm số thẻ BHYT và ghi nhận tiền sử dị ứng thuốc.",
+            "actor": "Lễ tân, Bác sĩ",
+            "pre": "Lễ tân đã đăng nhập vào hệ thống với vai trò Receptionist hoặc Admin.",
+            "post": "Hồ sơ bệnh nhân được lưu trữ trong CSDL, mã y tế duy nhất (medical_code) được cấp phát tự động.",
+            "basic_flow": "1. Lễ tân vào phân hệ Tiếp đón bệnh nhân.\n"
+                          "2. Nhập số CCCD hoặc Số điện thoại vào ô tìm kiếm nhanh.\n"
+                          "3. Nếu bệnh nhân đã có hồ sơ cũ: Hệ thống hiển thị thông tin để đối chiếu và mở ca khám mới.\n"
+                          "4. Nếu bệnh nhân mới: Lễ tân nhấn 'Đăng ký bệnh nhân mới', nhập họ tên, ngày sinh, giới tính, địa chỉ, số CCCD, số BHYT và tiền sử dị ứng thuốc.\n"
+                          "5. Lễ tân nhấn 'Lưu hồ sơ'.\n"
+                          "6. Hệ thống kiểm tra tính duy nhất của CCCD/SĐT, sinh mã BN tự động và thêm vào hàng đợi.",
+            "alt_flow": "4a. Số CCCD hoặc Số BHYT đã tồn tại trong hệ thống: Hệ thống thông báo trùng lặp và mở hồ sơ đã có để kiểm tra.\n"
+                        "4b. Dữ liệu ngày sinh không hợp lệ: Hệ thống cảnh báo đỏ và yêu cầu sửa lại trước khi lưu.",
+            "diagram_type": "Activity Diagram",
+            "diagram": """flowchart TD
+    Start([Bắt đầu tiếp đón]) --> Search[Tra cứu CCCD hoặc Số điện thoại]
+    Search --> Found{Bệnh nhân đã có hồ sơ?}
+    Found -- Có --> ConfirmInfo[Đối chiếu thông tin cá nhân]
+    ConfirmInfo --> CreateQueue[Đưa vào hàng đợi chờ khám]
+    Found -- Chưa --> InputForm[Nhập thông tin hành chính, BHYT, Dị ứng]
+    InputForm --> Validate[Kiểm tra định dạng và tính hợp lệ]
+    Validate --> Valid{Dữ liệu hợp lệ?}
+    Valid -- Không --> AlertErr[Báo lỗi định dạng và yêu cầu nhập lại]
+    AlertErr --> InputForm
+    Valid -- Có --> SaveDB[Lưu vào CSDL và sinh mã BN tự động]
+    SaveDB --> CreateQueue
+    CreateQueue --> End([Hoàn thành tiếp đón và in số thứ tự])"""
+        },
         {
             "id": "UC003",
             "name": "Đặt lịch khám và Kiểm tra trùng lịch",
@@ -281,35 +345,66 @@ def build_srs():
         },
         {
             "id": "UC004",
-            "name": "Khám lâm sàng EMR và Kê đơn thuốc có cảnh báo dị ứng",
-            "goal": "Ghi nhận toàn diện kết quả thăm khám lâm sàng, chỉ số sinh hiệu và kê đơn thuốc an toàn cho người bệnh.",
-            "desc": "Bác sĩ nhập triệu chứng, chỉ số sinh tồn (HA, mạch, SpO2, BMI), chẩn đoán mã ICD-10 và kê đơn thuốc có đối soát dị ứng.",
+            "name": "Khám lâm sàng EMR và Ghi nhận sinh hiệu",
+            "goal": "Ghi nhận toàn diện kết quả thăm khám lâm sàng, chỉ số sinh hiệu và kết luận chẩn đoán mã ICD-10.",
+            "desc": "Bác sĩ nhập triệu chứng, chỉ số sinh tồn (HA, mạch, SpO2, BMI), chẩn đoán mã bệnh theo chuẩn quốc tế ICD-10.",
             "actor": "Bác sĩ",
             "pre": "Bác sĩ đã đăng nhập thành công; Người bệnh đang ở trạng thái 'in_progress' trong hàng đợi khám.",
-            "post": "Hồ sơ bệnh án điện tử EMR và đơn thuốc được lưu trữ, chuyển trạng thái sang chờ thanh toán viện phí.",
+            "post": "Hồ sơ bệnh án điện tử EMR được lưu trữ hoàn tất, sẵn sàng chuyển sang kê đơn hoặc chỉ định cận lâm sàng.",
             "basic_flow": "1. Bác sĩ mở hồ sơ bệnh án của bệnh nhân từ danh sách chờ khám.\n"
                           "2. Bác sĩ nhập triệu chứng ban đầu và các chỉ số sinh hiệu (Huyết áp, Mạch, Nhiệt độ, SpO2, Chiều cao, Cân nặng).\n"
                           "3. Hệ thống tự động tính chỉ số BMI và hiển thị đánh giá thể trạng.\n"
                           "4. Bác sĩ tìm kiếm và chọn mã bệnh theo danh mục chuẩn quốc tế ICD-10.\n"
-                          "5. Bác sĩ thêm danh mục thuốc, nhập số lượng, đường dùng và liều lượng uống.\n"
-                          "6. Hệ thống đối soát thành phần hoạt chất thuốc với tiền sử dị ứng đã lưu của người bệnh.\n"
-                          "7. Hệ thống xác nhận an toàn dị ứng thuốc.\n"
-                          "8. Bác sĩ bấm 'Lưu và hoàn thành ca khám'.",
-            "alt_flow": "6a. Phát hiện thành phần thuốc trùng tiền sử dị ứng: Hệ thống hiển thị cảnh báo đỏ nổi bật, yêu cầu bác sĩ đổi thuốc hoặc nhập lý do chuyên môn bắt buộc để tiếp tục.\n"
-                        "5a. Số lượng thuốc trong kho không đủ: Hệ thống cảnh báo tồn kho và yêu cầu điều chỉnh số lượng.",
+                          "5. Bác sĩ nhập tóm tắt kết luận lâm sàng và hướng điều trị.\n"
+                          "6. Bác sĩ bấm 'Lưu kết quả khám'.",
+            "alt_flow": "2a. Chỉ số huyết áp hoặc nhịp tim ngoài ngưỡng an toàn sinh lý: Hệ thống hiển thị cảnh báo viền đỏ nổi bật nhắc bác sĩ kiểm tra lại.\n"
+                        "4a. Mã ICD-10 không tồn tại: Hệ thống gợi ý tìm kiếm theo từ khóa triệu chứng tiếng Việt tương đương.",
             "diagram_type": "Activity Diagram",
             "diagram": """flowchart TD
     Start([Bắt đầu ca khám]) --> OpenEMR[Mở hồ sơ bệnh án EMR]
     OpenEMR --> InputVitals[Nhập sinh hiệu: HA, Mạch, SpO2, Cân nặng, Chiều cao]
     InputVitals --> CalcBMI[Hệ thống tự động tính BMI và cảnh báo thể trạng]
     CalcBMI --> SelectICD[Tra cứu và chọn mã chẩn đoán ICD-10]
-    SelectICD --> AddMedicine[Chọn thuốc từ kho dược và nhập liều dùng]
-    AddMedicine --> CheckAllergy{Đối soát tiền sử dị ứng thuốc?}
-    CheckAllergy -- Trùng dị ứng --> WarnAlert[Cảnh báo nguy cơ dị ứng thuốc]
-    WarnAlert --> ChangeMed[Bác sĩ đổi thuốc khác an toàn]
-    ChangeMed --> AddMedicine
-    CheckAllergy -- An toàn --> SaveRecord[Lưu bệnh án EMR và đơn thuốc]
-    SaveRecord --> End([Chuyển hồ sơ sang thu viện phí])"""
+    SelectICD --> SaveRecord[Lưu bệnh án EMR hoàn tất]
+    SaveRecord --> End([Chuyển tiếp kê đơn thuốc])"""
+        },
+        {
+            "id": "UC005",
+            "name": "Kê đơn thuốc điện tử và Cảnh báo tương tác dị ứng",
+            "goal": "Hỗ trợ bác sĩ lập đơn thuốc điện tử an toàn, đối soát tự động thành phần thuốc với tiền sử dị ứng của người bệnh.",
+            "desc": "Bác sĩ chọn thuốc từ kho dược, chỉ định liều lượng, số lượng và tần suất uống. Hệ thống kiểm tra đối soát với tiền sử dị ứng đã lưu của bệnh nhân.",
+            "actor": "Bác sĩ",
+            "pre": "Ca khám bệnh án EMR đã hoàn thành bước chẩn đoán xác định bệnh.",
+            "post": "Đơn thuốc được tạo thành công, số lượng thuốc tồn kho được giữ chỗ tạm thời.",
+            "basic_flow": "1. Bác sĩ nhấn nút 'Kê đơn thuốc' trên màn hình EMR.\n"
+                          "2. Bác sĩ gõ tên thuốc hoặc hoạt chất, hệ thống hiển thị danh mục thuốc có sẵn trong kho.\n"
+                          "3. Bác sĩ chọn thuốc, nhập số lượng, số lần uống trong ngày (Sáng, Trưa, Chiều, Tối), số ngày dùng.\n"
+                          "4. Hệ thống tự động kích hoạt hàm check_drug_allergy(medicine_name) đối chiếu tiền sử dị ứng của bệnh nhân.\n"
+                          "5. Hệ thống xác nhận an toàn không có xung đột dị ứng.\n"
+                          "6. Bác sĩ nhấn 'Ký đơn thuốc và chuyển thu ngân'.",
+            "alt_flow": "4a. Phát hiện thành phần hoạt chất trùng với tiền sử dị ứng: Hệ thống hiển thị hộp cảnh báo màu đỏ kèm thông tin dị ứng cụ thể, yêu cầu bác sĩ đổi thuốc khác.\n"
+                        "3a. Số lượng thuốc yêu cầu vượt quá số lượng tồn kho: Hệ thống hiển thị cảnh báo hết thuốc và đề xuất số lượng tối đa hiện có.",
+            "diagram_type": "Sequence Diagram",
+            "diagram": """sequenceDiagram
+    autonumber
+    actor Doctor as Bác sĩ
+    participant UI as Bàn khám EMR
+    participant API as Prescription API
+    participant Checker as AllergyChecker
+    participant DB as CSDL MySQL
+
+    Doctor->>UI: Thêm thuốc (Paracetamol 500mg, SL: 20 viên)
+    UI->>API: POST /api/v1/prescriptions/check-item
+    API->>Checker: check_allergy(patient_id=104, medicine="Paracetamol")
+    Checker->>DB: Query patient.drug_allergies
+    DB-->>Checker: drug_allergies = "Aspirin, Penicillin"
+    Checker-->>API: Safe: Không trùng hoạt chất dị ứng
+    API-->>UI: 200 OK (Thuốc an toàn)
+    Doctor->>UI: Bấm "Lưu và Ký đơn thuốc"
+    UI->>API: POST /api/v1/prescriptions/
+    API->>DB: INSERT INTO prescriptions & prescription_items
+    DB-->>API: prescription_id = 88
+    API-->>UI: Hoàn thành đơn thuốc thành công"""
         },
         {
             "id": "UC006",
@@ -392,11 +487,153 @@ def build_srs():
     API->>DB: Ghi log gọi AI (AuditLog, latency_ms)
     API-->>UI: 200 OK (Bản tóm tắt an toàn)
     UI-->>Doctor: Hiển thị thẻ tóm tắt Pre-visit Card"""
+        },
+        {
+            "id": "UC008",
+            "name": "AI Chatbot hỏi đáp thủ tục FAQ và BHYT (RAG)",
+            "goal": "Giải đáp tự động các thắc mắc về thủ tục đăng ký, bảng giá dịch vụ và chính sách BHYT 24/7.",
+            "desc": "Người bệnh hoặc nhân viên gửi câu hỏi. Hệ thống kiểm tra an toàn Guardrails, truy vấn kho tri thức RAG và gọi Gemini API để phản hồi chính xác kèm cảnh báo y tế.",
+            "actor": "Lễ tân, Bệnh nhân, Quản trị viên",
+            "pre": "Hệ thống cơ sở tri thức phòng khám (FAQ Knowledge Base) đã được nạp dữ liệu.",
+            "post": "Câu trả lời được hiển thị trong khung chat, không chứa nội dung chẩn đoán bệnh học.",
+            "basic_flow": "1. Người dùng mở hộp thoại Trợ lý ảo AI Chatbot trên giao diện web.\n"
+                          "2. Người dùng nhập câu hỏi (VD: 'Thủ tục khám BHYT cần mang theo giấy tờ gì?').\n"
+                          "3. Hệ thống gửi câu hỏi qua bộ kiểm tra MedicalGuardrails.is_medical_diagnosis_query().\n"
+                          "4. Hệ thống xác nhận câu hỏi thuộc phạm vi hành chính, kích hoạt cơ chế RAG tìm kiếm tài liệu liên quan.\n"
+                          "5. Ghép ngữ cảnh tri thức phòng khám vào prompt gửi đến Google Gemini API.\n"
+                          "6. Mô hình sinh câu trả lời súc tích, đầy đủ và đính kèm lời nhắc bảo mật.\n"
+                          "7. Hệ thống hiển thị câu trả lời trên khung chat trong thời gian dưới 2 giây.",
+            "alt_flow": "3a. Người dùng hỏi câu hỏi chẩn đoán hoặc kê đơn bệnh tật (VD: 'Tôi bị đau ngực khó thở uống thuốc gì?'): Guardrails lập tức chặn lại và trả về thông báo an toàn: 'Trợ lý AI chỉ giải đáp thủ tục hành chính, không có chức năng khám bệnh. Vui lòng đến ngay phòng khám hoặc bệnh viện gần nhất để được bác sĩ tư vấn'.",
+            "diagram_type": "Sequence Diagram",
+            "diagram": """sequenceDiagram
+    autonumber
+    actor User as Bệnh nhân / Lễ tân
+    participant Chat as Widget Chatbot
+    participant API as Chatbot API (/api/v1/ai/chat)
+    participant Guard as MedicalGuardrails
+    participant RAG as KnowledgeBase (FAQ)
+    participant AI as Google Gemini Live
+
+    User->>Chat: Gửi câu hỏi thủ tục khám BHYT
+    Chat->>API: POST /api/v1/ai/chat {message: "..."}
+    API->>Guard: is_medical_diagnosis_query(message)
+    Guard-->>API: False (Câu hỏi hành chính an toàn)
+    API->>RAG: search_knowledge(query="thủ tục BHYT")
+    RAG-->>API: Trả về điều khoản quy định thẻ BHYT
+    API->>AI: Gửi Prompt (Context FAQ + Question)
+    AI-->>API: Trả về câu trả lời đã biên tập
+    API-->>Chat: 200 OK {response: "...", disclaimer: "..."}
+    Chat-->>User: Hiển thị phản hồi thân thiện và chính xác"""
+        },
+        {
+            "id": "UC009",
+            "name": "AI Sinh hướng dẫn dặn dò sau khám (Discharge Instructions)",
+            "goal": "Tự động tổng hợp và sinh bảng dặn dò sinh hoạt, lịch uống thuốc và dấu hiệu cấp cứu sau khi khám.",
+            "desc": "Trích xuất chẩn đoán và đơn thuốc đã kê, sinh bản hướng dẫn cá nhân hóa phân chia lịch uống thuốc (Sáng - Trưa - Chiều - Tối) và chế độ ăn kiêng cho bệnh nhân.",
+            "actor": "Bác sĩ",
+            "pre": "Hồ sơ bệnh án EMR và đơn thuốc của bệnh nhân đã hoàn thành.",
+            "post": "Tờ hướng dẫn sau khám trực quan được tạo ra, cho phép bác sĩ chỉnh sửa trước khi in phát cho người bệnh.",
+            "basic_flow": "1. Bác sĩ nhấn nút 'Tạo dặn dò sau khám AI' trên màn hình hoàn tất bệnh án.\n"
+                          "2. Hệ thống tổng hợp mã chẩn đoán ICD-10 và danh mục các loại thuốc vừa kê.\n"
+                          "3. Module AI sinh văn bản hướng dẫn gồm: Bảng lịch uống thuốc, Chế độ ăn uống sinh hoạt kiêng cữ, và Dấu hiệu cảnh báo nguy hiểm cần tái khám khẩn cấp.\n"
+                          "4. Bản thảo hiển thị trong cửa sổ biên tập để bác sĩ xem lại.\n"
+                          "5. Bác sĩ duyệt và nhấn 'In tờ dặn dò kèm đơn thuốc'.",
+            "alt_flow": "3a. Mất kết nối API bên ngoài: Hệ thống tự động kích hoạt bộ mẫu dặn dò chuẩn theo từng nhóm bệnh ICD-10 có sẵn trong cơ sở dữ liệu nội bộ.",
+            "diagram_type": "Activity Diagram",
+            "diagram": """flowchart TD
+    Start([Hoàn thành khám và kê đơn]) --> ReqGen[Bác sĩ bấm 'Sinh dặn dò sau khám AI']
+    ReqGen --> ExtractData[Trích xuất chẩn đoán và đơn thuốc]
+    ExtractData --> CallAI[Gọi AI phân chia lịch uống và chế độ ăn]
+    CallAI --> ReviewDraft[Hiển thị bản thảo cho bác sĩ duyệt]
+    ReviewDraft --> NeedEdit{Bác sĩ cần sửa đổi?}
+    NeedEdit -- Có --> EditContent[Bác sĩ chỉnh sửa văn bản]
+    EditContent --> Approve[Xác nhận bản hoàn chỉnh]
+    NeedEdit -- Không --> Approve
+    Approve --> PrintDoc[In phiếu dặn dò bàn giao bệnh nhân]
+    PrintDoc --> End([Hoàn tất quy trình sau khám])"""
+        },
+        {
+            "id": "UC010",
+            "name": "Phân ca làm việc bác sĩ và Khóa khung giờ trực",
+            "goal": "Quản lý và thiết lập lịch làm việc hàng tuần cho bác sĩ theo phòng khám, bảo đảm dữ liệu đầu vào cho bộ kiểm tra xung đột.",
+            "desc": "Quản trị viên tạo lịch trực theo ca (Sáng: 08:00 - 12:00, Chiều: 13:30 - 17:30) cho từng bác sĩ tại buồng khám chỉ định.",
+            "actor": "Quản trị viên",
+            "pre": "Quản trị viên đã đăng nhập thành công với vai trò Admin; Danh sách bác sĩ và phòng khám đã có trong hệ thống.",
+            "post": "Bản ghi ca trực (DoctorShift) được lưu trữ, hệ thống tự động khóa không cho đặt lịch ngoài khung giờ này.",
+            "basic_flow": "1. Quản trị viên vào phân hệ 'Quản trị ca trực bác sĩ'.\n"
+                          "2. Chọn bác sĩ, chọn phòng khám và chọn ngày làm việc trong tuần.\n"
+                          "3. Chọn ca làm việc (Ca sáng hoặc Ca chiều) và số lượng bệnh nhân tối đa tiếp nhận trong ca.\n"
+                          "4. Nhấn 'Lưu ca trực'.\n"
+                          "5. Hệ thống xác thực không có xung đột bác sĩ trực 2 phòng cùng lúc và cập nhật lịch làm việc.",
+            "alt_flow": "5a. Bác sĩ đã được phân ca tại phòng khám khác cùng khung giờ: Hệ thống cảnh báo trùng ca trực và từ chối lưu.",
+            "diagram_type": "Activity Diagram",
+            "diagram": """flowchart TD
+    Start([Bắt đầu xếp ca]) --> SelectDoc[Chọn bác sĩ và phòng khám]
+    SelectDoc --> SelectDate[Chọn ngày và khung giờ trực]
+    SelectDate --> CheckConflict{Kiểm tra trùng ca trực bác sĩ?}
+    CheckConflict -- Trùng lịch --> WarnErr[Báo lỗi trùng ca trực cùng giờ]
+    WarnErr --> SelectDate
+    CheckConflict -- Hợp lệ --> SaveShift[Lưu ca trực vào CSDL]
+    SaveShift --> UpdateCalendar[Cập nhật bảng lịch làm việc tuần]
+    UpdateCalendar --> End([Hoàn tất xếp ca])"""
+        },
+        {
+            "id": "UC011",
+            "name": "Quản trị danh mục dược phẩm và Tồn kho thuốc",
+            "goal": "Theo dõi số lượng tồn kho, giá bán, hoạt chất và cảnh báo khi thuốc sắp hết hàng trong tủ thuốc phòng khám.",
+            "desc": "Quản trị viên hoặc Dược sĩ thêm mới thuốc, cập nhật giá bán, theo dõi lượng thuốc xuất theo đơn và nhập kho bổ sung.",
+            "actor": "Quản trị viên, Kế toán",
+            "pre": "Người dùng đăng nhập với quyền Admin hoặc Accountant.",
+            "post": "Dữ liệu kho thuốc được cập nhật chính xác theo thời gian thực.",
+            "basic_flow": "1. Người dùng mở phân hệ 'Quản lý kho thuốc'.\n"
+                          "2. Xem danh sách tồn kho, lọc theo thuốc sắp hết hàng (tồn < 10 đơn vị).\n"
+                          "3. Thêm mới thuốc: Nhập tên thuốc, hoạt chất, quy cách đóng gói, đơn giá và số lượng ban đầu.\n"
+                          "4. Nhấn 'Lưu danh mục'.\n"
+                          "5. Hệ thống cập nhật bảng dữ liệu thuốc cho toàn phòng khám.",
+            "alt_flow": "3a. Tên thuốc đã tồn tại: Hệ thống hiển thị tùy chọn cập nhật số lượng nhập kho thay vì tạo mới.",
+            "diagram_type": "Activity Diagram",
+            "diagram": """flowchart TD
+    Start([Mở quản lý kho]) --> ViewStock[Xem danh sách tồn kho]
+    ViewStock --> CheckLow{Thuốc tồn dưới ngưỡng tối thiểu?}
+    CheckLow -- Đúng --> WarnLow[Hiển thị cảnh báo màu vàng cần nhập hàng]
+    CheckLow -- Không --> Normal[Hiển thị số lượng bình thường]
+    Normal --> UpdateAction[Nhập thêm thuốc hoặc sửa đơn giá]
+    WarnLow --> UpdateAction
+    UpdateAction --> SaveDB[Cập nhật CSDL kho dược]
+    SaveDB --> End([Hoàn tất cập nhật tồn kho])"""
+        },
+        {
+            "id": "UC012",
+            "name": "Giám sát nhật ký kiểm toán hệ thống và AI Call Logs",
+            "goal": "Lưu vết và giám sát toàn bộ các thao tác nhạy cảm, đăng nhập và lượt gọi mô hình AI theo tiêu chuẩn Nghị định 13/2023/NĐ-CP.",
+            "desc": "Hệ thống tự động ghi nhật ký AuditLog với địa chỉ IP, User ID, hành động và thời gian thực. Cung cấp màn hình theo dõi số lượng token và độ trễ gọi AI.",
+            "actor": "Quản trị viên",
+            "pre": "Quản trị viên đã đăng nhập với vai trò Admin.",
+            "post": "Báo cáo kiểm toán bảo mật và hiệu năng AI được hiển thị đầy đủ, không cho phép xóa sửa log.",
+            "basic_flow": "1. Quản trị viên truy cập mục 'Nhật ký kiểm toán an ninh'.\n"
+                          "2. Hệ thống hiển thị danh sách các sự kiện bảo mật: Đăng nhập thành công/thất bại, Thao tác sửa bệnh án, Xuất đơn thuốc.\n"
+                          "3. Quản trị viên chuyển sang tab 'Nhật ký AI': Xem độ trễ phản hồi (latency), số lượng token tiêu thụ, tỷ lệ thành công của mô hình.\n"
+                          "4. Quản trị viên lọc sự kiện theo ngày hoặc theo người dùng để kiểm tra bất thường.",
+            "alt_flow": "2a. Phát hiện nhiều lần đăng nhập thất bại liên tiếp từ một IP: Hệ thống đánh dấu cờ cảnh báo an ninh (Security Alert).",
+            "diagram_type": "Sequence Diagram",
+            "diagram": """sequenceDiagram
+    autonumber
+    actor Admin as Quản trị viên
+    participant UI as Màn hình Audit Logs
+    participant API as Audit API (/api/v1/audit)
+    participant DB as CSDL MySQL
+
+    Admin->>UI: Mở tab Giám sát an ninh & AI Logs
+    UI->>API: GET /api/v1/audit/logs?limit=50
+    API->>DB: Query bảng audit_logs sắp xếp giảm dần theo thời gian
+    DB-->>API: Trả về danh sách sự kiện (IP, user, action, latency)
+    API-->>UI: 200 OK (Dữ liệu nhật ký chuẩn)
+    UI-->>Admin: Hiển thị bảng kiểm toán và biểu đồ độ trễ AI"""
         }
     ]
 
-    for uc in use_cases_detailed:
-        add_h2(doc, f"3.{use_cases_detailed.index(uc) + 1}. Đặc tả Use Case {uc['id']}: {uc['name']}")
+    for idx, uc in enumerate(use_cases_detailed):
+        add_h2(doc, f"3.{idx + 1}. Đặc tả Use Case {uc['id']}: {uc['name']}")
 
         tbl_uc = doc.add_table(rows=8, cols=2)
         tbl_uc.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -418,7 +655,6 @@ def build_srs():
         for r_i, (f_label, f_val) in enumerate(uc_fields):
             row = tbl_uc.rows[r_i]
             if f_val is None:
-                # Dòng tiêu đề gộp ô
                 cell_a = row.cells[0]
                 cell_b = row.cells[1]
                 cell_a.merge(cell_b)
@@ -455,7 +691,10 @@ def build_srs():
         ("UC006", "US-ACC-01, US-ACC-02", "Q8, Q9", "backend/app/api/v1/invoices.py", "100%"),
         ("UC007", "US-AI-01, US-AI-02", "Q13, Q17, Q18", "backend/app/ai_engine/anonymizer.py", "100%"),
         ("UC008", "US-AI-03, US-AI-04", "Q15", "backend/app/ai_engine/knowledge_base.py", "100%"),
-        ("UC009", "US-AI-05, US-AI-06", "Q16", "backend/app/ai_engine/guardrails.py", "100%")
+        ("UC009", "US-AI-05, US-AI-06", "Q16", "backend/app/ai_engine/guardrails.py", "100%"),
+        ("UC010", "US-ADM-01, US-ADM-02", "Q19", "backend/app/api/v1/doctor_shifts.py", "100%"),
+        ("UC011", "US-MED-01, US-MED-02", "Q20", "backend/app/api/v1/medicines.py", "100%"),
+        ("UC012", "US-SEC-01, US-SEC-02", "Q14", "backend/app/api/v1/audit_logs.py", "100%")
     ]
     tbl_trace = doc.add_table(rows=len(trace_data) + 1, cols=5)
     tbl_trace.alignment = WD_TABLE_ALIGNMENT.CENTER
